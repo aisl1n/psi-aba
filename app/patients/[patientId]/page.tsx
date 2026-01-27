@@ -1,5 +1,4 @@
 import { getPatient } from '@/app/src/actions/patient-actions'
-import { startSessionAction } from '@/app/src/actions/session-actions'
 import {
   Card,
   CardContent,
@@ -10,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, Clock, Play } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { StartSessionButton } from './start-session-button'
 
 interface PatientPageProps {

@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Clock, Hash } from 'lucide-react'
+import { ArrowLeft, Clock, Hash } from 'lucide-react'
 import { CreateBehaviorDialog } from './create-behavior-dialog'
 
 interface BehaviorsPageProps {

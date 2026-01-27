@@ -1,5 +1,4 @@
 import { getPatients } from '@/app/src/actions/patient-actions'
-import { createPatient } from '@/app/src/actions/patient-actions'
 import {
   Card,
   CardContent,
@@ -8,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import Link from 'next/link'
 import { CreatePatientDialog } from './create-patient-dialog'
 
