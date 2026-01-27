@@ -120,23 +120,24 @@ psi-aba/
 
 3. **Set up environment variables**
    
-   Create a `.env.local` file in the root directory:
-   ```env
-   DATABASE_URL=postgresql://user:password@host:port/database
+   Copy `.env.example` to `.env` and set your Supabase connection string:
+   ```bash
+   cp .env.example .env
    ```
-   
-   Get your connection string from your Supabase project settings.
+   Edit `.env` and replace the placeholder with your **Connection pooler** URL (Supabase → Settings → Database, port **6543**). Use the pooler to avoid connection limit errors.
 
 4. **Run database migrations**
    ```bash
-   pnpm drizzle-kit push
+   pnpm db:push
    ```
    
    Or generate migrations:
    ```bash
-   pnpm drizzle-kit generate
-   pnpm drizzle-kit migrate
+   pnpm db:generate
+   pnpm db:migrate
    ```
+   
+   The `db:*` scripts load `DATABASE_URL` from `.env` before running drizzle-kit.
 
 5. **Start the development server**
    ```bash
@@ -196,10 +197,10 @@ psi-aba/
 
 ### Database Commands
 
-- `pnpm drizzle-kit push` - Push schema changes to database
-- `pnpm drizzle-kit generate` - Generate migration files
-- `pnpm drizzle-kit migrate` - Run migrations
-- `pnpm drizzle-kit studio` - Open Drizzle Studio (database GUI)
+- `pnpm db:push` - Push schema changes to database
+- `pnpm db:generate` - Generate migration files
+- `pnpm db:migrate` - Run migrations
+- `pnpm db:studio` - Open Drizzle Studio (database GUI)
 
 ## MVP Scope
 
