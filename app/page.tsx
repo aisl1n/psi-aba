@@ -8,7 +8,35 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { User, Activity } from 'lucide-react'
+import { User, Activity, BrainCogIcon } from 'lucide-react'
+import { patients } from '@/db/schema'
+
+type Patient = typeof patients.$inferSelect
+
+function renderPatients(patients: Patient[]) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="size-5" />
+          Pacientes
+        </CardTitle>
+        <CardDescription>
+          Gerencie seus pacientes e seus respectivos comportamentos.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-2xl font-bold">{patients.length}</p>
+        <p className="text-muted-foreground mb-4 text-sm">
+          Total de pacientes cadastrados
+        </p>
+        <Link href="/patients">
+          <Button className="w-full">Visualizar</Button>
+        </Link>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default async function Home() {
   const result = await getPatients()
@@ -18,34 +46,16 @@ export default async function Home() {
     <div className="bg-background min-h-screen">
       <div className="container mx-auto p-4 md:p-6">
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold">ABA Therapy Tracker</h1>
-          <p className="text-muted-foreground text-lg">
-            Real-time data collection for Applied Behavior Analysis therapy
-          </p>
+          <div className="mb-2 flex flex-col items-center gap-1">
+            <BrainCogIcon className="size-10" color="green" />
+            <h1 className="text-2xl font-bold">ABA Tracker</h1>
+            <p className="text-muted-foreground text-xs">
+              Gestão de pacientes e comportamentos.
+            </p>
+          </div>
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Patients
-              </CardTitle>
-              <CardDescription>
-                Manage your patients and their behaviors
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-2 text-2xl font-bold">{patients.length}</p>
-              <p className="text-muted-foreground mb-4 text-sm">
-                Total patients registered
-              </p>
-              <Link href="/patients">
-                <Button className="w-full">View Patients</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -77,6 +87,8 @@ export default async function Home() {
             </CardContent>
           </Card>
         </div>
+
+        {renderPatients(patients)}
 
         {patients.length > 0 && (
           <Card>
