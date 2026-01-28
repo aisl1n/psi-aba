@@ -3,24 +3,25 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBehavior } from '@/app/src/actions/behavior-actions'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus } from 'lucide-react'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 
-interface CreateBehaviorDialogProps {
+interface CreateBehaviorSheetProps {
   patientId: number
 }
 
-export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
+export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -58,25 +59,26 @@ export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Behavior
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button size="sm" className="w-fit">
+          <Plus className="size-4" />
+          Comportamento
         </Button>
-      </DialogTrigger>
-      <DialogContent>
+      </SheetTrigger>
+      <SheetContent side="bottom">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Create New Behavior</DialogTitle>
-            <DialogDescription>
-              Add a behavior to track during therapy sessions.
-            </DialogDescription>
-          </DialogHeader>
+          <SheetHeader>
+            <SheetTitle>Adicionar novo comportamento</SheetTitle>
+            <SheetDescription className="text-muted-foreground text-start text-xs">
+              Adicione um comportamento para rastrear durante as sessões de
+              terapia.
+            </SheetDescription>
+          </SheetHeader>
           <div className="space-y-4 py-4">
             <div>
               <label htmlFor="name" className="text-sm font-medium">
-                Behavior Name
+                Nome do comportamento
               </label>
               <Input
                 id="name"
@@ -84,13 +86,15 @@ export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-2"
-                placeholder="e.g., Hand flapping, Eye contact"
+                placeholder="e.g., Balanço de mão, Contato visual"
                 required
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tracking Types</label>
+              <label className="text-sm font-medium">
+                Tipos de rastreamento
+              </label>
               <div className="space-y-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -99,7 +103,9 @@ export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
                     onChange={(e) => setTracksFrequency(e.target.checked)}
                     className="h-4 w-4 rounded border-gray-300"
                   />
-                  <span className="text-sm">Track Frequency (Count)</span>
+                  <span className="text-sm">
+                    Rastrear frequência (Contagem)
+                  </span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -108,19 +114,19 @@ export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
                     onChange={(e) => setTracksDuration(e.target.checked)}
                     className="h-4 w-4 rounded border-gray-300"
                   />
-                  <span className="text-sm">Track Duration (Timer)</span>
+                  <span className="text-sm">Rastrear duração (Cronômetro)</span>
                 </label>
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isCreating}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               type="submit"
@@ -130,11 +136,11 @@ export function CreateBehaviorDialog({ patientId }: CreateBehaviorDialogProps) {
                 (!tracksFrequency && !tracksDuration)
               }
             >
-              {isCreating ? 'Creating...' : 'Create Behavior'}
+              {isCreating ? 'Criando...' : 'Criar comportamento'}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

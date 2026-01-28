@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus } from 'lucide-react'
 
-export function CreatePatientDialog() {
+export function CreatePatientSheet() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -38,7 +38,7 @@ export function CreatePatientDialog() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button>
+        <Button size="sm">
           <Plus className="size-4" />
           Adicionar
         </Button>

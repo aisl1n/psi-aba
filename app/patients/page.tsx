@@ -7,11 +7,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { User } from 'lucide-react'
+import { ArrowLeft, User } from 'lucide-react'
 import Link from 'next/link'
-import { CreatePatientDialog } from './create-patient-dialog'
+import { CreatePatientSheet } from './create-patient-sheet'
 import { Patient } from '../types'
 import { ROUTES } from '@/constants/routes'
+import { createdAtText } from '@/utils'
 
 export default async function PatientsPage() {
   const result = await getPatients()
@@ -43,7 +44,7 @@ export default async function PatientsPage() {
               Crie seu primeiro paciente para começar a rastrear sessões de
               terapia
             </p>
-            <CreatePatientDialog />
+            <CreatePatientSheet />
           </CardContent>
         </Card>
       )
@@ -52,29 +53,22 @@ export default async function PatientsPage() {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {patients.map((patient) => (
-          <Card
-            key={patient.id}
-            className="border-primary border-2 transition-shadow hover:shadow-lg"
-          >
+          <Card key={patient.id} className="transition-shadow hover:shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="text-primary size-5" />
                 {patient.name}
               </CardTitle>
               <CardDescription className="text-muted-foreground text-xs">
-                Adicionado em {new Date(patient.createdAt).toLocaleDateString()}
+                {createdAtText(patient?.createdAt)}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2">
+              <div className="flex justify-around gap-2">
                 <Link
                   href={`${ROUTES.PATIENT.replace(':patientId', patient.id.toString())}`}
-                  className="flex-1"
                 >
-                  <Button
-                    variant="outline"
-                    className="border-primary w-full border-2"
-                  >
+                  <Button variant="outline" size="sm" className="w-full">
                     Ver detalhes
                   </Button>
                 </Link>
@@ -83,12 +77,8 @@ export default async function PatientsPage() {
                     ':patientId',
                     patient.id.toString()
                   )}
-                  className="flex-1"
                 >
-                  <Button
-                    variant="outline"
-                    className="border-primary w-full border-2"
-                  >
+                  <Button variant="outline" size="sm" className="w-full">
                     Comportamentos
                   </Button>
                 </Link>
@@ -102,6 +92,12 @@ export default async function PatientsPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-6">
+      <Link href={ROUTES.HOME}>
+        <Button variant="link" className="mb-2">
+          <ArrowLeft className="size-4" />
+          Voltar para início
+        </Button>
+      </Link>
       <div className="mb-6 flex items-center justify-between gap-2">
         <div className="flex flex-1 flex-col gap-1">
           <h1 className="text-3xl font-bold">Pacientes</h1>
@@ -109,7 +105,7 @@ export default async function PatientsPage() {
             Gerencie seus pacientes e inicie sessões de terapia
           </p>
         </div>
-        <CreatePatientDialog />
+        <CreatePatientSheet />
       </div>
 
       {renderPatients(patients)}

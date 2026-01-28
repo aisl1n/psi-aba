@@ -10,8 +10,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Hash } from 'lucide-react'
-import { CreateBehaviorDialog } from './create-behavior-dialog'
+import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react'
+import { CreateBehaviorSheet } from './create-behavior-sheet'
+import { ROUTES } from '@/constants/routes'
+import { Badge } from '@/components/ui/badge'
+import { Behavior } from '@/app/types'
+
+const DECIMAL_RADIX = 10
+const FIRST_NAME_INDEX = 0
 
 interface BehaviorsPageProps {
   params: Promise<{ patientId: string }>
@@ -19,81 +25,116 @@ interface BehaviorsPageProps {
 
 export default async function BehaviorsPage({ params }: BehaviorsPageProps) {
   const { patientId } = await params
-  const patientIdNum = parseInt(patientId, 10)
+  const patientIdNum = parseInt(patientId, DECIMAL_RADIX)
 
-  if (isNaN(patientIdNum)) {
-    redirect('/patients')
+  const isInvalidPatientId = isNaN(patientIdNum)
+  if (isInvalidPatientId) {
+    redirect(ROUTES.PATIENTS)
   }
 
-  // Verify patient exists
   const patientResult = await getPatient(patientIdNum)
-  if (!patientResult.success || !patientResult.data) {
-    redirect('/patients')
+  const isPatientNotFound = !patientResult.success || !patientResult.data
+  if (isPatientNotFound) {
+    redirect(ROUTES.PATIENTS)
   }
 
   const behaviorsResult = await getPatientBehaviors(patientIdNum)
   const behaviors = behaviorsResult.success ? behaviorsResult.data || [] : []
+  const patientName = patientResult.data.name.split(' ')[FIRST_NAME_INDEX]
+
+  function renderBehaviorStatus(behavior: Behavior) {
+    const isActive = behavior.isActive
+    return isActive ? 'Ativo' : 'Inativo'
+  }
+
+  function renderBehaviorBadges(behavior: Behavior) {
+    const hasFrequencyTracking = behavior.tracksFrequency
+    const hasDurationTracking = behavior.tracksDuration
+
+    return (
+      <div className="my-4 flex flex-col gap-2">
+        {hasFrequencyTracking && (
+          <Badge variant="default" className="flex items-center gap-1">
+            <CheckCircle2 className="size-3" />
+            Frequência
+          </Badge>
+        )}
+        {hasDurationTracking && (
+          <Badge variant="default" className="flex items-center gap-1">
+            <Clock className="size-3" />
+            Duração
+          </Badge>
+        )}
+      </div>
+    )
+  }
+
+  function renderEmptyState() {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground mb-4 text-sm">
+            Nenhum comportamento adicionado. Adicione comportamentos para
+            começar a monitorar.
+          </p>
+          <CreateBehaviorSheet patientId={patientIdNum} />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  function renderBehaviorsList() {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {behaviors.map((behavior) => (
+          <Card
+            key={behavior.id}
+            className="flex h-20 justify-between transition-shadow hover:shadow-lg"
+          >
+            <CardHeader>
+              <CardTitle className="text-sm">
+                <span>{behavior.name}</span>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground -mt-2 text-xs">
+                {renderBehaviorStatus(behavior)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>{renderBehaviorBadges(behavior)}</CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  function renderBehaviorsContent() {
+    const hasBehaviors = behaviors.length > 0
+
+    if (!hasBehaviors) {
+      return renderEmptyState()
+    }
+
+    return renderBehaviorsList()
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
       <div className="mb-6">
-        <Link href={`/patients/${patientId}`}>
-          <Button variant="ghost" size="sm" className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Patient
+        <Link href={ROUTES.PATIENT.replace(':patientId', patientId)}>
+          <Button variant="link" className="mb-2">
+            <ArrowLeft className="size-4" />
+            Voltar para {patientName}
           </Button>
         </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Behaviors</h1>
-            <p className="text-muted-foreground">
-              Manage behaviors for {patientResult.data.name}
-            </p>
-          </div>
-          <CreateBehaviorDialog patientId={patientIdNum} />
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold">Comportamentos</h1>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Gerencie os comportamentos de {patientName}
+          </p>
+          <CreateBehaviorSheet patientId={patientIdNum} />
         </div>
       </div>
 
-      {behaviors.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              No behaviors configured yet. Create your first behavior to start
-              tracking.
-            </p>
-            <CreateBehaviorDialog patientId={patientIdNum} />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {behaviors.map((behavior) => (
-            <Card key={behavior.id}>
-              <CardHeader>
-                <CardTitle>{behavior.name}</CardTitle>
-                <CardDescription>
-                  {behavior.isActive ? 'Active' : 'Inactive'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {behavior.tracksFrequency && (
-                    <div className="bg-secondary flex items-center gap-1 rounded-md px-2 py-1 text-xs">
-                      <Hash className="h-3 w-3" />
-                      Frequency
-                    </div>
-                  )}
-                  {behavior.tracksDuration && (
-                    <div className="bg-secondary flex items-center gap-1 rounded-md px-2 py-1 text-xs">
-                      <Clock className="h-3 w-3" />
-                      Duration
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {renderBehaviorsContent()}
     </div>
   )
 }

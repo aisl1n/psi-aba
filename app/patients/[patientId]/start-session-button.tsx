@@ -21,15 +21,15 @@ export function StartSessionButton({ patientId }: StartSessionButtonProps) {
     if (result.success && result.sessionId) {
       router.push(`/session/${result.sessionId}`)
     } else {
-      alert(`Failed to start session: ${result.error || 'Unknown error'}`)
+      alert(`Falha ao iniciar sessão: ${result.error || 'Erro desconhecido'}`)
       setIsStarting(false)
     }
   }
 
   return (
-    <Button onClick={handleStartSession} disabled={isStarting} size="lg">
-      <Play className="mr-2 h-4 w-4" />
-      {isStarting ? 'Starting...' : 'Start Session'}
+    <Button onClick={handleStartSession} disabled={isStarting} size="sm">
+      <Play className="size-4" />
+      {isStarting ? 'Iniciando...' : 'Iniciar sessão'}
     </Button>
   )
 }
