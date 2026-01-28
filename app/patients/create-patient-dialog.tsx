@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPatient } from '@/app/src/actions/patient-actions'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus } from 'lucide-react'
@@ -22,43 +22,39 @@ export function CreatePatientDialog() {
   const [name, setName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
+  const isValidName = name.trim().length >= 3 && name.trim().length <= 30
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
-
+    if (!isValidName) return
     setIsCreating(true)
-    const result = await createPatient(name.trim())
-
-    if (result.success) {
-      setOpen(false)
-      setName('')
-      router.refresh()
-    } else {
-      alert(`Failed to create patient: ${result.error}`)
-    }
-
+    await createPatient(name.trim())
+    setOpen(false)
+    setName('')
+    router.refresh()
     setIsCreating(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Patient
+          <Plus className="size-4" />
+          Adicionar
         </Button>
-      </DialogTrigger>
-      <DialogContent>
+      </SheetTrigger>
+      <SheetContent side="bottom">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Create New Patient</DialogTitle>
-            <DialogDescription>
-              Add a new patient to start tracking therapy sessions.
-            </DialogDescription>
-          </DialogHeader>
+          <SheetHeader>
+            <SheetTitle>Adicionar novo paciente</SheetTitle>
+            <SheetDescription>
+              Adicione um novo paciente para começar a rastrear sessões de
+              terapia.
+            </SheetDescription>
+          </SheetHeader>
           <div className="py-4">
             <label htmlFor="name" className="text-sm font-medium">
-              Patient Name
+              Nome do paciente
             </label>
             <Input
               id="name"
@@ -66,26 +62,26 @@ export function CreatePatientDialog() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-2"
-              placeholder="Enter patient name"
+              placeholder="Digite o nome do paciente"
               required
               autoFocus
             />
           </div>
-          <DialogFooter>
+          <SheetFooter className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isCreating}
             >
-              Cancel
+              Cancelar
             </Button>
-            <Button type="submit" disabled={isCreating || !name.trim()}>
-              {isCreating ? 'Creating...' : 'Create Patient'}
+            <Button type="submit" disabled={isCreating || !isValidName}>
+              {isCreating ? 'Criando...' : 'Adicionar paciente'}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

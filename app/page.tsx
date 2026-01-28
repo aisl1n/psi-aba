@@ -8,11 +8,9 @@ import {
   RotateCcw,
   UserRound,
 } from 'lucide-react'
-import { patients } from '@/db/schema'
 import { ROUTES } from '@/constants/routes'
 import MenuCard from '@/components/menu-card'
-
-type Patient = typeof patients.$inferSelect
+import { Patient } from './types'
 
 function renderQuickStartContent(patients: Patient[]) {
   const hasPatients = patients.length > 0
