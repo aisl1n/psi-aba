@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getSessionSummary } from '@/app/src/actions/session-actions'
 import {
   BarChart,
@@ -16,33 +16,61 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface SessionChartsProps {
-  sessionId: number
+interface BehaviorSummary {
+  name: string
+  totalCount: number
+  totalDuration: number
+  events: number
+  behaviorType: string
 }
 
-export function SessionCharts({ sessionId }: SessionChartsProps) {
-  const [data, setData] = useState<{ summary: any[]; logs: any[] } | null>(null)
+interface SessionLog {
+  id: number
+  sessionId: number
+  behaviorId: number
+  count: number
+  duration: number
+  timestamp: Date
+}
+
+interface SessionChartsProps {
+  sessionId: number
+  isPostSession?: boolean
+}
+
+export function SessionCharts({
+  sessionId,
+  isPostSession = false,
+}: SessionChartsProps) {
+  const [data, setData] = useState<{
+    summary: BehaviorSummary[]
+    logs: SessionLog[]
+  } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadData()
-    // Refresh every 5 seconds
-    const interval = setInterval(loadData, 5000)
-    return () => clearInterval(interval)
-  }, [sessionId])
-
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     const result = await getSessionSummary(sessionId)
     if (result.success && result.data) {
       setData(result.data)
       setLoading(false)
     }
-  }
+  }, [sessionId])
+
+  useEffect(() => {
+    // Initial load of chart data
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+    void loadData()
+    // Only refresh in active session (not post-session)
+    if (!isPostSession) {
+      const interval = setInterval(loadData, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [loadData, isPostSession])
 
   if (loading || !data) {
     return (
       <div className="text-muted-foreground py-8 text-center">
-        Loading chart data...
+        Carregando dados do gráfico...
       </div>
     )
   }
@@ -50,54 +78,86 @@ export function SessionCharts({ sessionId }: SessionChartsProps) {
   if (data.summary.length === 0) {
     return (
       <div className="text-muted-foreground py-8 text-center">
-        No data to display yet. Start tracking behaviors to see charts.
+        Nenhum dado para exibir. Comece a monitorar comportamentos para ver os
+        gráficos.
       </div>
     )
   }
 
-  // Prepare data for frequency chart
-  const frequencyData = data.summary
+  // Separate data by behavior type
+  const adaptiveData = data.summary.filter(
+    (item) => item.behaviorType === 'adaptive'
+  )
+  const maladaptiveData = data.summary.filter(
+    (item) => item.behaviorType === 'maladaptive'
+  )
+
+  // Prepare data for frequency chart (separated by type)
+  const frequencyAdaptive = adaptiveData
     .filter((item) => item.totalCount > 0)
     .map((item) => ({
       name: item.name,
       count: item.totalCount,
     }))
 
-  // Prepare data for duration chart
-  const durationData = data.summary
+  const frequencyMaladaptive = maladaptiveData
+    .filter((item) => item.totalCount > 0)
+    .map((item) => ({
+      name: item.name,
+      count: item.totalCount,
+    }))
+
+  // Prepare data for duration chart (separated by type)
+  const durationAdaptive = adaptiveData
     .filter((item) => item.totalDuration > 0)
     .map((item) => ({
       name: item.name,
-      duration: Math.floor(item.totalDuration / 60), // Convert to minutes
+      duration: item.totalDuration, // Keep in seconds
+    }))
+
+  const durationMaladaptive = maladaptiveData
+    .filter((item) => item.totalDuration > 0)
+    .map((item) => ({
+      name: item.name,
+      duration: item.totalDuration, // Keep in seconds
     }))
 
   // Prepare timeline data (events over time)
   const timelineData = data.logs
-    .reduce((acc: any[], log) => {
-      const time = new Date(log.timestamp).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-      const existing = acc.find((item) => item.time === time)
-      if (existing) {
-        existing.events += 1
-      } else {
-        acc.push({ time, events: 1 })
-      }
-      return acc
-    }, [])
+    .reduce(
+      (
+        acc: Array<{ time: string; events: number }>,
+        log: SessionLog
+      ) => {
+        const time = new Date(log.timestamp).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+        const existing = acc.find((item) => item.time === time)
+        if (existing) {
+          existing.events += 1
+        } else {
+          acc.push({ time, events: 1 })
+        }
+        return acc
+      },
+      []
+    )
     .slice(-20) // Last 20 time points
 
   return (
     <div className="space-y-6">
-      {frequencyData.length > 0 && (
+      {/* Frequency Charts by Type */}
+      {frequencyAdaptive.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Frequency by Behavior</CardTitle>
+            <CardTitle className="text-primary">
+              Frequência - Comportamentos Adaptativos
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={frequencyData}>
+              <BarChart data={frequencyAdaptive}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="name"
@@ -108,21 +168,23 @@ export function SessionCharts({ sessionId }: SessionChartsProps) {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="hsl(var(--primary))" />
+                <Bar dataKey="count" fill="hsl(142.8 64.2% 24.1%)" name="Contagem" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
-      {durationData.length > 0 && (
+      {frequencyMaladaptive.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Duration by Behavior (Minutes)</CardTitle>
+            <CardTitle className="text-destructive">
+              Frequência - Comportamentos Desadaptativos
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={durationData}>
+              <BarChart data={frequencyMaladaptive}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="name"
@@ -133,17 +195,73 @@ export function SessionCharts({ sessionId }: SessionChartsProps) {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="duration" fill="hsl(var(--secondary))" />
+                <Bar dataKey="count" fill="hsl(0 84.2% 60.2%)" name="Contagem" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
+      {/* Duration Charts by Type */}
+      {durationAdaptive.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-primary">
+              Duração - Comportamentos Adaptativos (Segundos)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={durationAdaptive}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="duration" fill="hsl(142.8 64.2% 24.1%)" name="Duração (seg)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {durationMaladaptive.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Duração - Comportamentos Desadaptativos (Segundos)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={durationMaladaptive}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="duration" fill="hsl(0 84.2% 60.2%)" name="Duração (seg)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Timeline */}
       {timelineData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Event Timeline</CardTitle>
+            <CardTitle>Linha do Tempo de Eventos</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -158,6 +276,7 @@ export function SessionCharts({ sessionId }: SessionChartsProps) {
                   dataKey="events"
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
+                  name="Eventos"
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -64,7 +64,7 @@ export default async function PatientsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-around gap-2">
+              <div className="flex justify-center gap-6">
                 <Link
                   href={`${ROUTES.PATIENT.replace(':patientId', patient.id.toString())}`}
                 >

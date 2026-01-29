@@ -26,7 +26,8 @@ export async function createBehavior(
   patientId: number,
   name: string,
   tracksFrequency: boolean = true,
-  tracksDuration: boolean = true
+  tracksDuration: boolean = true,
+  behaviorType: 'adaptive' | 'maladaptive' = 'maladaptive'
 ) {
   try {
     const newBehavior = await db
@@ -36,6 +37,7 @@ export async function createBehavior(
         name,
         tracksFrequency,
         tracksDuration,
+        behaviorType,
       })
       .returning()
 
@@ -54,6 +56,7 @@ export async function updateBehavior(
     isActive?: boolean
     tracksFrequency?: boolean
     tracksDuration?: boolean
+    behaviorType?: 'adaptive' | 'maladaptive'
   }
 ) {
   try {

@@ -27,6 +27,9 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
   const [name, setName] = useState('')
   const [tracksFrequency, setTracksFrequency] = useState(true)
   const [tracksDuration, setTracksDuration] = useState(true)
+  const [behaviorType, setBehaviorType] = useState<'adaptive' | 'maladaptive'>(
+    'maladaptive'
+  )
   const [isCreating, setIsCreating] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +45,8 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
       patientId,
       name.trim(),
       tracksFrequency,
-      tracksDuration
+      tracksDuration,
+      behaviorType
     )
 
     if (result.success) {
@@ -50,9 +54,10 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
       setName('')
       setTracksFrequency(true)
       setTracksDuration(true)
+      setBehaviorType('maladaptive')
       router.refresh()
     } else {
-      alert(`Failed to create behavior: ${result.error}`)
+      alert(`Falha ao criar comportamento: ${result.error}`)
     }
 
     setIsCreating(false)
@@ -90,6 +95,31 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
                 required
                 autoFocus
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tipo de comportamento</label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="behaviorType"
+                    checked={behaviorType === 'adaptive'}
+                    onChange={() => setBehaviorType('adaptive')}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">Adaptativo</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="behaviorType"
+                    checked={behaviorType === 'maladaptive'}
+                    onChange={() => setBehaviorType('maladaptive')}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">Desadaptativo</span>
+                </label>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">

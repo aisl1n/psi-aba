@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Pencil } from 'lucide-react'
-import { StartSessionButton } from './start-session-button'
+import { StartSessionSheet } from './start-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
 import { Behavior, Session } from '@/app/types'
@@ -109,7 +109,13 @@ export default async function PatientPage({ params }: PatientPageProps) {
     const hasEnded = session.endedAt
 
     if (hasEnded) {
-      return <span className="text-muted-foreground text-xs">Concluída</span>
+      return (
+        <Link href={`/session/${session.id}/summary`}>
+          <Button variant="link" size="sm">
+            Ver resumo
+          </Button>
+        </Link>
+      )
     }
 
     return (
@@ -164,7 +170,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
       </div>
 
       <div className="mb-6 flex w-full justify-around gap-4 md:flex-row">
-        <StartSessionButton patientId={patientIdNum} />
+        <StartSessionSheet patientId={patientIdNum} />
         <Link
           href={`${ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId)}`}
         >

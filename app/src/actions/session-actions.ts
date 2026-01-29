@@ -4,15 +4,24 @@ import { db } from '@/db'
 import { sessions, sessionLogs, behaviors } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { PreSessionData } from '@/app/types'
 
 // 1. Iniciar uma nova sessão
-export async function startSessionAction(patientId: number) {
+export async function startSessionAction(
+  patientId: number,
+  preSessionData: PreSessionData
+) {
   try {
     const newSession = await db
       .insert(sessions)
       .values({
         patientId,
         startedAt: new Date(),
+        sleepHours: preSessionData.sleepHours,
+        hasEaten: preSessionData.hasEaten,
+        hasTakenMedication: preSessionData.hasTakenMedication,
+        companion: preSessionData.companion,
+        companionOther: preSessionData.companionOther,
       })
       .returning({ id: sessions.id })
 
@@ -63,10 +72,13 @@ export async function endSessionAction(sessionId: number, notes?: string) {
         notes: notes || '',
       })
       .where(eq(sessions.id, sessionId))
-
+    
+    revalidatePath(`/session/${sessionId}`)
     revalidatePath('/dashboard')
+    
     return { success: true }
   } catch (error) {
+    console.error('Erro ao finalizar sessão:', error)
     return { success: false, error: 'Erro ao finalizar sessão' }
   }
 }
@@ -121,6 +133,7 @@ export async function getSessionSummary(sessionId: number) {
         totalCount: number
         totalDuration: number
         events: number
+        behaviorType: string
       }
     >()
 
@@ -131,6 +144,7 @@ export async function getSessionSummary(sessionId: number) {
         totalCount: 0,
         totalDuration: 0,
         events: 0,
+        behaviorType: log.behavior.behaviorType,
       }
 
       existing.totalCount += log.count
@@ -146,5 +160,77 @@ export async function getSessionSummary(sessionId: number) {
   } catch (error) {
     console.error('Error fetching session summary:', error)
     return { success: false, error: 'Failed to fetch session summary' }
+  }
+}
+
+// 6. Get post-session data for summary page
+export async function getPostSessionData(sessionId: number) {
+  try {
+    const session = await db.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+      with: {
+        patient: true,
+      },
+    })
+
+    if (!session) {
+      return { success: false, error: 'Sessão não encontrada' }
+    }
+
+    const logs = await db.query.sessionLogs.findMany({
+      where: eq(sessionLogs.sessionId, sessionId),
+      with: {
+        behavior: true,
+      },
+      orderBy: (sessionLogs, { asc }) => [asc(sessionLogs.timestamp)],
+    })
+
+    // Aggregate stats by behavior
+    const behaviorStatsMap = new Map<
+      number,
+      {
+        behaviorId: number
+        name: string
+        behaviorType: string
+        totalCount: number
+        totalDuration: number
+        durations: number[]
+      }
+    >()
+
+    logs.forEach((log) => {
+      const behaviorId = log.behaviorId
+      const existing = behaviorStatsMap.get(behaviorId) || {
+        behaviorId,
+        name: log.behavior.name,
+        behaviorType: log.behavior.behaviorType,
+        totalCount: 0,
+        totalDuration: 0,
+        durations: [],
+      }
+
+      existing.totalCount += log.count
+      existing.totalDuration += log.duration
+      // Only add duration to the array if it's greater than 0
+      if (log.duration > 0) {
+        existing.durations.push(log.duration)
+      }
+
+      behaviorStatsMap.set(behaviorId, existing)
+    })
+
+    const behaviorStats = Array.from(behaviorStatsMap.values())
+
+    return {
+      success: true,
+      data: {
+        session,
+        behaviorStats,
+        logs,
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching post-session data:', error)
+    return { success: false, error: 'Failed to fetch post-session data' }
   }
 }

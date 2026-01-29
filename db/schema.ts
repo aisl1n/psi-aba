@@ -6,8 +6,15 @@ import {
   integer,
   boolean,
   text,
+  pgEnum,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+
+// Enums
+export const behaviorTypeEnum = pgEnum('behavior_type', [
+  'adaptive',
+  'maladaptive',
+])
 
 // Patients table
 export const patients = pgTable('patients', {
@@ -24,6 +31,9 @@ export const behaviors = pgTable('behaviors', {
     .references(() => patients.id, { onDelete: 'cascade' })
     .notNull(),
   name: varchar('name', { length: 255 }).notNull(),
+  behaviorType: behaviorTypeEnum('behavior_type')
+    .default('maladaptive')
+    .notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   tracksFrequency: boolean('tracks_frequency').default(true).notNull(),
   tracksDuration: boolean('tracks_duration').default(true).notNull(),
@@ -40,6 +50,12 @@ export const sessions = pgTable('sessions', {
   startedAt: timestamp('started_at').defaultNow().notNull(),
   endedAt: timestamp('ended_at'),
   notes: text('notes'),
+  // Pre-session data
+  sleepHours: integer('sleep_hours'),
+  hasEaten: boolean('has_eaten'),
+  hasTakenMedication: boolean('has_taken_medication'),
+  companion: varchar('companion', { length: 50 }),
+  companionOther: varchar('companion_other', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
