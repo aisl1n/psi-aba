@@ -10,13 +10,11 @@ import {
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
-// Enums
 export const behaviorTypeEnum = pgEnum('behavior_type', [
   'adaptive',
   'maladaptive',
 ])
 
-// Patients table
 export const patients = pgTable('patients', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -24,7 +22,6 @@ export const patients = pgTable('patients', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-// Behaviors table
 export const behaviors = pgTable('behaviors', {
   id: serial('id').primaryKey(),
   patientId: integer('patient_id')
@@ -41,7 +38,6 @@ export const behaviors = pgTable('behaviors', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-// Sessions table
 export const sessions = pgTable('sessions', {
   id: serial('id').primaryKey(),
   patientId: integer('patient_id')
@@ -50,7 +46,6 @@ export const sessions = pgTable('sessions', {
   startedAt: timestamp('started_at').defaultNow().notNull(),
   endedAt: timestamp('ended_at'),
   notes: text('notes'),
-  // Pre-session data
   sleepHours: integer('sleep_hours'),
   hasEaten: boolean('has_eaten'),
   hasTakenMedication: boolean('has_taken_medication'),
@@ -60,7 +55,6 @@ export const sessions = pgTable('sessions', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-// Session logs table
 export const sessionLogs = pgTable('session_logs', {
   id: serial('id').primaryKey(),
   sessionId: integer('session_id')
@@ -70,12 +64,11 @@ export const sessionLogs = pgTable('session_logs', {
     .references(() => behaviors.id, { onDelete: 'cascade' })
     .notNull(),
   count: integer('count').default(0).notNull(),
-  duration: integer('duration').default(0).notNull(), // Duration in seconds
+  duration: integer('duration').default(0).notNull(),
   timestamp: timestamp('timestamp').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-// Relations
 export const patientsRelations = relations(patients, ({ many }) => ({
   behaviors: many(behaviors),
   sessions: many(sessions),
