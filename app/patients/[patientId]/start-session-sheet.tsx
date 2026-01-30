@@ -15,17 +15,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { ROUTES } from '@/constants/routes'
 
 interface StartSessionSheetProps {
   patientId: number
+  hasBehaviors: boolean
 }
 
-export function StartSessionSheet({ patientId }: StartSessionSheetProps) {
+export function StartSessionSheet({
+  patientId,
+  hasBehaviors,
+}: StartSessionSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
-
-  // Pre-session form fields
   const [sleepHours, setSleepHours] = useState<number>(8)
   const [hasEaten, setHasEaten] = useState(true)
   const [hasTakenMedication, setHasTakenMedication] = useState(false)
@@ -56,7 +59,9 @@ export function StartSessionSheet({ patientId }: StartSessionSheetProps) {
 
     if (result.success && result.sessionId) {
       setOpen(false)
-      router.push(`/session/${result.sessionId}`)
+      router.push(
+        ROUTES.SESSION.replace(':sessionId', result.sessionId.toString())
+      )
     } else {
       alert(`Falha ao iniciar sessão: ${result.error || 'Erro desconhecido'}`)
       setIsStarting(false)
@@ -66,7 +71,7 @@ export function StartSessionSheet({ patientId }: StartSessionSheetProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" disabled={!hasBehaviors}>
           <Play className="size-4" />
           Iniciar sessão
         </Button>

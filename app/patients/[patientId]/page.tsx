@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Pencil } from 'lucide-react'
+import { ArrowLeft, Calendar, Pencil, Plus } from 'lucide-react'
 import { StartSessionSheet } from './start-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
@@ -39,9 +39,10 @@ export default async function PatientPage({ params }: PatientPageProps) {
 
   const { name, createdAt, behaviors, sessions } = patient
 
+  const hasBehaviors = behaviors?.length > 0
+
   function renderBehaviorsLength(behaviors: Behavior[]) {
     const hasOneBehavior = behaviors.length === 1
-    const hasBehaviors = behaviors.length > 0
     const behaviorsQuantity = behaviors.length
 
     if (!hasBehaviors) {
@@ -70,8 +71,6 @@ export default async function PatientPage({ params }: PatientPageProps) {
   }
 
   function renderBehaviorsContent(behaviors: Behavior[]) {
-    const hasBehaviors = behaviors.length > 0
-
     if (!hasBehaviors) {
       return (
         <p className="text-muted-foreground text-sm">
@@ -108,23 +107,28 @@ export default async function PatientPage({ params }: PatientPageProps) {
   function renderSessionStatus(session: Session) {
     const hasEnded = session.endedAt
 
-    if (hasEnded) {
-      return (
-        <Link href={`/session/${session.id}/summary`}>
-          <Button variant="link" size="sm">
-            Ver resumo
-          </Button>
-        </Link>
-      )
-    }
+    if (!hasEnded) return null
 
     return (
-      <Link href={ROUTES.SESSION.replace(':sessionId', session.id.toString())}>
+      <Link
+        href={ROUTES.SESSION_SUMMARY.replace(
+          ':sessionId',
+          session.id.toString()
+        )}
+      >
         <Button variant="link" size="sm">
-          Continuar
+          Ver resumo
         </Button>
       </Link>
     )
+  }
+
+  function renderBehaviorsIcon() {
+    if (hasBehaviors) {
+      return <Pencil className="size-4" />
+    }
+
+    return <Plus className="size-4" />
   }
 
   function renderSessionsContent(sessions: Session[]) {
@@ -170,12 +174,15 @@ export default async function PatientPage({ params }: PatientPageProps) {
       </div>
 
       <div className="mb-6 flex w-full justify-around gap-4 md:flex-row">
-        <StartSessionSheet patientId={patientIdNum} />
+        <StartSessionSheet
+          patientId={patientIdNum}
+          hasBehaviors={hasBehaviors}
+        />
         <Link
           href={`${ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId)}`}
         >
           <Button variant="outline" size="sm">
-            <Pencil className="size-4" />
+            {renderBehaviorsIcon()}
             Comportamentos
           </Button>
         </Link>
