@@ -7,11 +7,14 @@ import { logBehaviorAction } from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatTimeMMSS } from '@/utils'
 
-// Constants
-const TIMER_UPDATE_INTERVAL = 1000 // 1 second
+const TIMER_UPDATE_INTERVAL_MS = 1000
+const FREQUENCY_COUNT_INCREMENT = 1
+const NO_COUNT = 0
+const NO_DURATION = 0
+const BUTTON_HEIGHT_CLASS = 'h-28'
 
-// Types
 type BehaviorType = 'adaptive' | 'maladaptive'
 
 interface BehaviorButtonProps {
@@ -24,6 +27,45 @@ interface BehaviorButtonProps {
   initialCount?: number
 }
 
+interface TrackingResult {
+  duration: number
+  shouldCount: boolean
+}
+
+interface BehaviorColors {
+  border: string
+  bg: string
+  ring: string
+  textColor: string
+  badgeColor: string
+}
+
+const isAdaptiveBehavior = (type: BehaviorType): boolean => type === 'adaptive'
+
+const getBehaviorColors = (
+  type: BehaviorType,
+  isActive: boolean
+): BehaviorColors => {
+  const isAdaptive = isAdaptiveBehavior(type)
+
+  const border = isAdaptive ? 'border-primary' : 'border-destructive'
+  const ring = isAdaptive ? 'ring-primary/50' : 'ring-destructive/50'
+
+  const bg = isActive
+    ? isAdaptive
+      ? 'bg-primary hover:bg-primary/90'
+      : 'bg-destructive hover:bg-destructive/90'
+    : 'bg-background hover:bg-accent'
+
+  const textColor = isActive ? 'text-primary-foreground' : 'text-foreground'
+
+  const badgeColor = isActive
+    ? 'text-primary-foreground border-primary-foreground/30'
+    : 'text-foreground border-foreground/20'
+
+  return { border, bg, ring, textColor, badgeColor }
+}
+
 export function BehaviorButton({
   behaviorId,
   behaviorName,
@@ -33,128 +75,100 @@ export function BehaviorButton({
   behaviorType,
   initialCount = 0,
 }: BehaviorButtonProps) {
-  // State
-  const [count, setCount] = useState(initialCount)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [elapsedTimeDisplay, setElapsedTimeDisplay] = useState(0)
-  const [lastDuration, setLastDuration] = useState(0)
+  const [frequencyCount, setFrequencyCount] = useState(initialCount)
+  const [isProcessingTap, setIsProcessingTap] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [lastRecordedDuration, setLastRecordedDuration] = useState(0)
 
-  // Store hooks
   const { startTimer, stopTimer, getElapsedTime, isTimerRunning } =
     useTimerStore()
-
   const isTimerActive = isTimerRunning(behaviorId)
 
-  // Effects
-  // Update elapsed time display every second when timer is running
   useEffect(() => {
-    if (!isTimerActive) {
-      // Reset display when timer stops - this is an intentional state sync
-      setElapsedTimeDisplay(0)
-      return
-    }
-
     const updateElapsedTime = () => {
-      const elapsed = getElapsedTime(behaviorId)
-      setElapsedTimeDisplay(elapsed)
+      if (isTimerActive) {
+        const elapsed = getElapsedTime(behaviorId)
+        setElapsedSeconds(elapsed)
+      } else {
+        setElapsedSeconds(0)
+      }
     }
 
-    updateElapsedTime()
-    const interval = setInterval(updateElapsedTime, TIMER_UPDATE_INTERVAL)
+    const initialUpdateTimeout = setTimeout(updateElapsedTime, 0)
 
-    return () => clearInterval(interval)
+    const updateInterval = setInterval(
+      updateElapsedTime,
+      TIMER_UPDATE_INTERVAL_MS
+    )
+
+    return () => {
+      clearTimeout(initialUpdateTimeout)
+      clearInterval(updateInterval)
+    }
   }, [isTimerActive, behaviorId, getElapsedTime])
 
-  // Helper functions
-  function formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  function handleDurationTracking() {
+  const handleDurationTracking = (): TrackingResult => {
     if (isTimerActive) {
-      // Stop timer and return duration
-      const duration = stopTimer(behaviorId) || 0
-      setLastDuration(duration)
+      const duration = stopTimer(behaviorId) || NO_DURATION
+      setLastRecordedDuration(duration)
       return { duration, shouldCount: false }
     } else {
-      // Start timer
       startTimer(behaviorId)
-      return { duration: 0, shouldCount: tracksFrequency }
+      return { duration: NO_DURATION, shouldCount: tracksFrequency }
     }
   }
 
-  function handleFrequencyTracking() {
-    return { duration: 0, shouldCount: true }
+  const handleFrequencyTracking = (): TrackingResult => {
+    return { duration: NO_DURATION, shouldCount: true }
   }
 
-  async function logBehaviorData(
+  const logBehaviorData = async (
     shouldCount: boolean,
     duration: number
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      // Log duration if stopped timer
-      if (duration > 0) {
-        await logBehaviorAction(sessionId, behaviorId, 0, duration)
+      if (duration > NO_DURATION) {
+        await logBehaviorAction(sessionId, behaviorId, NO_COUNT, duration)
       }
 
-      // Log frequency count
       if (shouldCount) {
-        await logBehaviorAction(sessionId, behaviorId, 1, 0)
+        await logBehaviorAction(
+          sessionId,
+          behaviorId,
+          FREQUENCY_COUNT_INCREMENT,
+          NO_DURATION
+        )
       }
     } catch (error) {
       console.error('Error logging behavior:', error)
-      // Rollback count on error
       if (shouldCount) {
-        setCount((prev) => prev - 1)
+        setFrequencyCount((prev) => prev - FREQUENCY_COUNT_INCREMENT)
       }
     }
   }
 
-  async function handleTap(): Promise<void> {
-    if (isProcessing) return
+  const handleTap = async (): Promise<void> => {
+    if (isProcessingTap) return
 
-    setIsProcessing(true)
+    setIsProcessingTap(true)
 
-    // Determine tracking behavior
     const trackingResult = tracksDuration
       ? handleDurationTracking()
       : handleFrequencyTracking()
 
-    // Update count optimistically if needed
     if (trackingResult.shouldCount) {
-      setCount((prev) => prev + 1)
+      setFrequencyCount((prev) => prev + FREQUENCY_COUNT_INCREMENT)
     }
 
-    // Log to backend
     await logBehaviorData(trackingResult.shouldCount, trackingResult.duration)
 
-    setIsProcessing(false)
+    setIsProcessingTap(false)
   }
 
-  // Helper function for colors
-  function getBehaviorColors(type: BehaviorType, isActive: boolean) {
-    const isAdaptive = type === 'adaptive'
+  const renderFrequencyBadge = () => {
+    const shouldShow = tracksFrequency && frequencyCount > 0
+    if (!shouldShow) return null
 
-    return {
-      border: isAdaptive ? 'border-primary' : 'border-destructive',
-      bg: isActive
-        ? isAdaptive
-          ? 'bg-primary hover:bg-primary/90'
-          : 'bg-destructive hover:bg-destructive/90'
-        : 'bg-background hover:bg-accent',
-      ring: isAdaptive ? 'ring-primary/50' : 'ring-destructive/50',
-      textColor: isActive ? 'text-primary-foreground' : 'text-foreground',
-      badgeColor: isActive
-        ? 'text-primary-foreground border-primary-foreground/30'
-        : 'text-foreground border-foreground/20',
-    }
-  }
-
-  // Render helpers
-  function renderFrequencyBadge() {
-    if (!tracksFrequency) return null
     const colors = getBehaviorColors(behaviorType, isTimerActive)
 
     return (
@@ -162,14 +176,15 @@ export function BehaviorButton({
         variant="outline"
         className={cn('px-2 text-xs', colors.badgeColor)}
       >
-        {count > 0 && <CheckCircle2 className="mr-1 size-3" />}
-        {count}
+        <CheckCircle2 className="mr-1 size-3" />
+        {frequencyCount}
       </Badge>
     )
   }
 
-  function renderActiveTimerBadge() {
+  const renderActiveTimerBadge = () => {
     if (!tracksDuration || !isTimerActive) return null
+
     const colors = getBehaviorColors(behaviorType, isTimerActive)
 
     return (
@@ -181,13 +196,14 @@ export function BehaviorButton({
         )}
       >
         <Clock className="size-3" />
-        {formatTime(elapsedTimeDisplay)}
+        {formatTimeMMSS(elapsedSeconds)}
       </Badge>
     )
   }
 
-  function renderLastDurationBadge() {
-    const shouldShow = tracksDuration && !isTimerActive && lastDuration > 0
+  const renderLastDurationBadge = () => {
+    const shouldShow =
+      tracksDuration && !isTimerActive && lastRecordedDuration > 0
     if (!shouldShow) return null
 
     return (
@@ -195,16 +211,16 @@ export function BehaviorButton({
         variant="outline"
         className="text-foreground border-foreground/20 flex items-center gap-1 px-2 text-xs"
       >
-        Último: {formatTime(lastDuration)}
+        Último: {formatTimeMMSS(lastRecordedDuration)}
       </Badge>
     )
   }
 
-  // Styling
   const colors = getBehaviorColors(behaviorType, isTimerActive)
   const buttonClassName = cn(
-    'relative h-28 w-full flex-col gap-2 py-4 text-sm font-semibold transition-all border-2',
+    'relative w-full flex-col gap-2 py-4 text-sm font-semibold transition-all border-2',
     'hover:scale-105 active:scale-95',
+    BUTTON_HEIGHT_CLASS,
     colors.border,
     colors.bg,
     isTimerActive && `animate-pulse ring-2 ring-offset-1 ${colors.ring}`
@@ -213,7 +229,7 @@ export function BehaviorButton({
   return (
     <Button
       onClick={handleTap}
-      disabled={isProcessing}
+      disabled={isProcessingTap}
       className={buttonClassName}
       variant="ghost"
       size="default"

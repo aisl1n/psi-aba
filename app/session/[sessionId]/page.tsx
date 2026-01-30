@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SessionClient } from './session-client'
+import { ROUTES } from '@/constants/routes'
 
 interface SessionPageProps {
   params: Promise<{ sessionId: string }>
@@ -15,25 +16,23 @@ export default async function SessionPage({ params }: SessionPageProps) {
   const sessionIdNum = parseInt(sessionId, 10)
 
   if (isNaN(sessionIdNum)) {
-    redirect('/')
+    redirect(ROUTES.HOME)
   }
 
   const result = await getSessionData(sessionIdNum)
 
   if (!result.success || !result.data) {
-    redirect('/')
+    redirect(ROUTES.HOME)
   }
 
   const session = result.data
   const behaviors = session.patient.behaviors || []
 
-  // Calculate session duration
   const sessionStartTime = new Date(session.startedAt)
 
   return (
     <div className="bg-background min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{session.patient.name}</h1>
@@ -46,7 +45,6 @@ export default async function SessionPage({ params }: SessionPageProps) {
           </div>
         </div>
 
-        {/* Behavior Grid */}
         {behaviors.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -76,7 +74,6 @@ export default async function SessionPage({ params }: SessionPageProps) {
           </div>
         )}
 
-        {/* Summary Card */}
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Resumo da sessão</CardTitle>

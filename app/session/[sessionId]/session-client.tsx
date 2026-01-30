@@ -1,12 +1,19 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { endSessionAction } from '@/app/src/actions/session-actions'
-import { getSessionSummary } from '@/app/src/actions/session-actions'
+import {
+  endSessionAction,
+  getSessionSummary,
+} from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { useTimerStore } from '@/lib/stores/timer-store'
+import { ROUTES } from '@/constants/routes'
+import { formatDuration, calculateDurationInSeconds } from '@/utils'
+
+const SUMMARY_REFRESH_INTERVAL_MS = 5000
+const SESSION_DURATION_UPDATE_INTERVAL_MS = 1000
 
 interface SessionClientProps {
   sessionId: number
@@ -31,94 +38,110 @@ interface SessionLog {
   timestamp: Date
 }
 
+interface SessionSummaryData {
+  summary: BehaviorSummary[]
+  logs: SessionLog[]
+}
+
+const calculateTotalBehaviorCount = (
+  behaviorSummaries: BehaviorSummary[]
+): number => {
+  return behaviorSummaries.reduce(
+    (total, behavior) => total + behavior.totalCount,
+    0
+  )
+}
+
+const confirmSessionEnd = (): boolean => {
+  return confirm('Tem certeza que deseja finalizar esta sessão?')
+}
+
 export function SessionClient({
   sessionId,
   showSummary = false,
   sessionStartTime,
 }: SessionClientProps) {
   const router = useRouter()
-  const [isEnding, setIsEnding] = useState(false)
-  const [summary, setSummary] = useState<{
-    summary: BehaviorSummary[]
-    logs: SessionLog[]
-  } | null>(null)
-  const [sessionDuration, setSessionDuration] = useState(0)
   const { activeTimers } = useTimerStore()
 
-  const loadSummary = React.useCallback(async () => {
+  const [isEndingSession, setIsEndingSession] = useState(false)
+  const [summaryData, setSummaryData] = useState<SessionSummaryData | null>(
+    null
+  )
+  const [elapsedSessionSeconds, setElapsedSessionSeconds] = useState(0)
+
+  const fetchSummary = useCallback(async () => {
     const result = await getSessionSummary(sessionId)
     if (result.success && result.data) {
-      setSummary(result.data)
+      setSummaryData(result.data)
     }
   }, [sessionId])
 
   useEffect(() => {
-    if (showSummary) {
-      // Initial load of summary data
-      void loadSummary()
-      // Refresh summary every 5 seconds
-      const interval = setInterval(loadSummary, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [showSummary, loadSummary])
+    if (!showSummary) return
 
-  // Update session duration every second
+    const initialLoadTimeout = setTimeout(() => {
+      fetchSummary().catch(console.error)
+    }, 0)
+
+    const refreshInterval = setInterval(() => {
+      fetchSummary().catch(console.error)
+    }, SUMMARY_REFRESH_INTERVAL_MS)
+
+    return () => {
+      clearTimeout(initialLoadTimeout)
+      clearInterval(refreshInterval)
+    }
+  }, [showSummary, fetchSummary])
+
   useEffect(() => {
-    if (showSummary && sessionStartTime) {
-      const updateDuration = () => {
-        const now = new Date()
-        const startTime = new Date(sessionStartTime)
-        const durationInSeconds = Math.floor(
-          (now.getTime() - startTime.getTime()) / 1000
-        )
-        setSessionDuration(durationInSeconds)
-      }
+    if (!showSummary || !sessionStartTime) return
 
-      updateDuration()
-      const interval = setInterval(updateDuration, 1000)
-      return () => clearInterval(interval)
+    const updateElapsedTime = () => {
+      const startTime = new Date(sessionStartTime)
+      const durationInSeconds = calculateDurationInSeconds(startTime)
+      setElapsedSessionSeconds(durationInSeconds)
     }
+
+    updateElapsedTime()
+    const updateInterval = setInterval(
+      updateElapsedTime,
+      SESSION_DURATION_UPDATE_INTERVAL_MS
+    )
+
+    return () => clearInterval(updateInterval)
   }, [showSummary, sessionStartTime])
 
   const handleEndSession = async () => {
-    if (!confirm('Tem certeza que deseja finalizar esta sessão?')) {
-      return
-    }
+    if (!confirmSessionEnd()) return
 
-    setIsEnding(true)
-    
+    setIsEndingSession(true)
+
     try {
       const result = await endSessionAction(sessionId)
 
       if (result.success) {
-        router.push(`/session/${sessionId}/summary`)
+        const summaryRoute = ROUTES.SESSION_SUMMARY.replace(
+          ':sessionId',
+          sessionId.toString()
+        )
+        router.push(summaryRoute)
       } else {
-        alert(`Falha ao finalizar sessão: ${result.error || 'Erro desconhecido'}`)
-        setIsEnding(false)
+        alert(
+          `Falha ao finalizar sessão: ${result.error || 'Erro desconhecido'}`
+        )
+        setIsEndingSession(false)
       }
     } catch (error) {
       console.error('Erro ao finalizar sessão:', error)
       alert('Erro inesperado ao finalizar sessão')
-      setIsEnding(false)
+      setIsEndingSession(false)
     }
   }
 
-  if (showSummary && summary) {
-    const totalCount = summary.summary.reduce(
-      (acc, item) => acc + item.totalCount,
-      0
-    )
-    const activeSimultaneousCount = activeTimers.size
-
-    const formatDuration = (seconds: number): string => {
-      const hours = Math.floor(seconds / 3600)
-      const mins = Math.floor((seconds % 3600) / 60)
-      const secs = seconds % 60
-      if (hours > 0) {
-        return `${hours}h ${mins}m ${secs}s`
-      }
-      return `${mins}m ${secs}s`
-    }
+  if (showSummary && summaryData) {
+    const totalBehaviorCount = calculateTotalBehaviorCount(summaryData.summary)
+    const activeSimultaneousTimers = activeTimers.size
 
     return (
       <div className="space-y-4">
@@ -127,17 +150,19 @@ export function SessionClient({
             <p className="text-muted-foreground text-sm">
               Total de comportamentos
             </p>
-            <p className="text-2xl font-bold">{totalCount}</p>
+            <p className="text-2xl font-bold">{totalBehaviorCount}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Duração da sessão</p>
-            <p className="text-2xl font-bold">{formatDuration(sessionDuration)}</p>
+            <p className="text-2xl font-bold">
+              {formatDuration(elapsedSessionSeconds)}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">
               Monitoramento simultâneo
             </p>
-            <p className="text-2xl font-bold">{activeSimultaneousCount}</p>
+            <p className="text-2xl font-bold">{activeSimultaneousTimers}</p>
           </div>
         </div>
       </div>
@@ -147,12 +172,12 @@ export function SessionClient({
   return (
     <Button
       onClick={handleEndSession}
-      disabled={isEnding}
+      disabled={isEndingSession}
       variant="destructive"
       size="sm"
     >
-      <X className="mr-2 h-4 w-4" />
-      {isEnding ? 'Finalizando...' : 'Finalizar sessão'}
+      <X className="size-5" />
+      {isEndingSession ? 'Finalizando...' : 'Finalizar sessão'}
     </Button>
   )
 }
