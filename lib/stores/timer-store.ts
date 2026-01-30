@@ -8,8 +8,8 @@ interface TimerState {
 interface TimerStore {
   activeTimers: Map<number, TimerState>
   startTimer: (behaviorId: number) => void
-  stopTimer: (behaviorId: number) => number | null // Returns duration in seconds
-  getElapsedTime: (behaviorId: number) => number // Returns elapsed time in seconds
+  stopTimer: (behaviorId: number) => number | null
+  getElapsedTime: (behaviorId: number) => number
   isTimerRunning: (behaviorId: number) => boolean
   clearTimer: (behaviorId: number) => void
   clearAllTimers: () => void
@@ -23,10 +23,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const timer = state.activeTimers.get(behaviorId)
 
     if (timer?.isRunning) {
-      // Timer is already running, stop it
       get().stopTimer(behaviorId)
     } else {
-      // Start new timer
       const newTimers = new Map(state.activeTimers)
       newTimers.set(behaviorId, {
         startTime: Date.now(),
@@ -44,7 +42,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       return null
     }
 
-    const duration = Math.floor((Date.now() - timer.startTime) / 1000) // Convert to seconds
+    const duration = Math.floor((Date.now() - timer.startTime) / 1000)
 
     const newTimers = new Map(state.activeTimers)
     newTimers.delete(behaviorId)
@@ -62,7 +60,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       return 0
     }
 
-    return Math.floor((Date.now() - timer.startTime) / 1000) // Return elapsed time in seconds
+    return Math.floor((Date.now() - timer.startTime) / 1000)
   },
 
   isTimerRunning: (behaviorId: number) => {
