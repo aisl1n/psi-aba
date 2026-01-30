@@ -4,4 +4,5 @@ export const ROUTES = {
   PATIENT: '/patients/:patientId',
   PATIENT_BEHAVIORS: '/patients/:patientId/behaviors',
   SESSION: '/session/:sessionId',
+  SESSION_SUMMARY: '/session/:sessionId/summary',
 }
