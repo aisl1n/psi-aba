@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SessionClient } from './session-client'
 import { ROUTES } from '@/constants/routes'
+import { ClockIcon } from 'lucide-react'
 
 interface SessionPageProps {
   params: Promise<{ sessionId: string }>
@@ -29,6 +30,21 @@ export default async function SessionPage({ params }: SessionPageProps) {
   const behaviors = session.patient.behaviors || []
 
   const sessionStartTime = new Date(session.startedAt)
+
+  function renderBehaviorsCaption() {
+    return (
+      <div className="my-3 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="bg-primary size-4 rounded" />
+          <span className="text-muted-foreground text-sm">Adaptativo</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="bg-destructive size-4 rounded" />
+          <span className="text-muted-foreground text-sm">Desadaptativo</span>
+        </div>
+      </div>
+    )
+  }
 
   const renderBehaviors = () => {
     const hasBehaviors = behaviors.length > 0
@@ -70,14 +86,19 @@ export default async function SessionPage({ params }: SessionPageProps) {
   return (
     <div className="bg-background min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{session.patient.name}</h1>
             <p className="text-muted-foreground text-sm">
-              Sessão iniciada às {sessionStartTime.toLocaleTimeString()}
+              Sessão iniciada às:
+              <span className="text-muted-foreground flex items-center gap-1 font-medium">
+                <ClockIcon className="size-4" />
+                {sessionStartTime.toLocaleTimeString()}
+              </span>
             </p>
+            {renderBehaviorsCaption()}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="absolute right-0 mt-2 items-center p-4">
             <SessionClient sessionId={sessionIdNum} />
           </div>
         </div>

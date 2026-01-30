@@ -46,15 +46,27 @@ export const calculateTotalBehaviorCount = (
 }
 
 /**
- * Exibe uma confirmação nativa do navegador para finalizar a sessão
- * @returns true se o usuário confirmar, false caso contrário
+ * Exibe um toast de confirmação para finalizar a sessão
+ * @param onConfirm - Função a ser executada quando o usuário confirmar
  */
-export const confirmSessionEnd = (): boolean => {
-  return confirm('Tem certeza que deseja finalizar esta sessão?')
+export const showSessionEndConfirmationToast = (
+  onConfirm: () => void
+): void => {
+  toast('Tem certeza que deseja finalizar a sessão?', {
+    action: {
+      label: 'Sim, finalizar',
+      onClick: onConfirm,
+    },
+    cancel: {
+      label: 'Cancelar',
+      onClick: () => {},
+    },
+    duration: 10000,
+  })
 }
 
 /**
- * Exibe um toast de confirmação para finalizar sessão
+ * Exibe um toast de confirmação para finalizar sessão ao sair
  * @param onConfirm - Função a ser executada quando o usuário confirmar
  */
 export const showSessionExitWithoutTimersToast = (
@@ -93,6 +105,25 @@ export const showSessionEndErrorToast = (): void => {
  */
 export const showSessionEndUnexpectedErrorToast = (): void => {
   toast.error('Erro inesperado ao finalizar sessão')
+}
+
+/**
+ * Exibe um toast de erro ao finalizar sessão com mensagem personalizada
+ * @param errorMessage - Mensagem de erro a ser exibida
+ */
+export const showSessionEndFailureToast = (errorMessage?: string): void => {
+  toast.error('Falha ao finalizar sessão', {
+    description: errorMessage || 'Erro desconhecido',
+  })
+}
+
+/**
+ * Exibe um toast de erro inesperado ao tentar ir para o resumo
+ */
+export const showSessionNavigationErrorToast = (): void => {
+  toast.error('Erro inesperado ao finalizar sessão', {
+    description: 'Não foi possível navegar para o resumo',
+  })
 }
 
 /**

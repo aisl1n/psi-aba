@@ -16,11 +16,13 @@ import { formatDuration, calculateDurationInSeconds } from '@/utils'
 import {
   type SessionSummaryData,
   calculateTotalBehaviorCount,
-  confirmSessionEnd,
+  showSessionEndConfirmationToast,
   showSessionExitWithoutTimersToast,
   showSessionEndSuccessToast,
   showSessionEndErrorToast,
   showSessionEndUnexpectedErrorToast,
+  showSessionEndFailureToast,
+  showSessionNavigationErrorToast,
   hasActiveTimers,
 } from '@/utils/session-utils'
 
@@ -152,35 +154,33 @@ export function SessionClient({
     return () => clearInterval(updateInterval)
   }, [showSummary, sessionStartTime])
 
-  const handleEndSession = async () => {
-    if (!confirmSessionEnd()) return
+  const handleEndSession = () => {
+    showSessionEndConfirmationToast(async () => {
+      setIsEndingSession(true)
 
-    setIsEndingSession(true)
+      try {
+        if (hasActiveTimers(activeTimers.size)) {
+          await stopAllActiveTimers()
+        }
 
-    try {
-      if (hasActiveTimers(activeTimers.size)) {
-        await stopAllActiveTimers()
-      }
+        const result = await endSessionAction(sessionId)
 
-      const result = await endSessionAction(sessionId)
-
-      if (result.success) {
-        const summaryRoute = ROUTES.SESSION_SUMMARY.replace(
-          ':sessionId',
-          sessionId.toString()
-        )
-        router.push(summaryRoute)
-      } else {
-        alert(
-          `Falha ao finalizar sessão: ${result.error || 'Erro desconhecido'}`
-        )
+        if (result.success) {
+          const summaryRoute = ROUTES.SESSION_SUMMARY.replace(
+            ':sessionId',
+            sessionId.toString()
+          )
+          router.push(summaryRoute)
+        } else {
+          showSessionEndFailureToast(result.error)
+          setIsEndingSession(false)
+        }
+      } catch (error) {
+        console.error('Erro ao finalizar sessão:', error)
+        showSessionNavigationErrorToast()
         setIsEndingSession(false)
       }
-    } catch (error) {
-      console.error('Erro ao finalizar sessão:', error)
-      alert('Erro inesperado ao finalizar sessão')
-      setIsEndingSession(false)
-    }
+    })
   }
 
   const renderSummaryView = () => {
