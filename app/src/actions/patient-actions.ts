@@ -1,5 +1,6 @@
 'use server'
 
+import { ROUTES } from '@/constants/routes'
 import { db } from '@/db'
 import { patients } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -26,7 +27,7 @@ export async function createPatient(name: string) {
       })
       .returning()
 
-    revalidatePath('/patients')
+    revalidatePath(ROUTES.PATIENTS)
     return { success: true, data: newPatient[0] }
   } catch (error) {
     console.error('Error creating patient:', error)

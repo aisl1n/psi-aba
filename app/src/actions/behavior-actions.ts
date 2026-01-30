@@ -1,5 +1,6 @@
 'use server'
 
+import { ROUTES } from '@/constants/routes'
 import { db } from '@/db'
 import { behaviors } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -41,7 +42,9 @@ export async function createBehavior(
       })
       .returning()
 
-    revalidatePath(`/patients/${patientId}/behaviors`)
+    revalidatePath(
+      ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId.toString())
+    )
     return { success: true, data: newBehavior[0] }
   } catch (error) {
     console.error('Error creating behavior:', error)
@@ -70,7 +73,7 @@ export async function updateBehavior(
       return { success: false, error: 'Behavior not found' }
     }
 
-    revalidatePath('/patients')
+    revalidatePath(ROUTES.PATIENTS)
     return { success: true, data: updated[0] }
   } catch (error) {
     console.error('Error updating behavior:', error)
@@ -82,7 +85,7 @@ export async function deleteBehavior(behaviorId: number) {
   try {
     await db.delete(behaviors).where(eq(behaviors.id, behaviorId))
 
-    revalidatePath('/patients')
+    revalidatePath(ROUTES.PATIENTS)
     return { success: true }
   } catch (error) {
     console.error('Error deleting behavior:', error)

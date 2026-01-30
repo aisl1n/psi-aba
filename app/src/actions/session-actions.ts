@@ -6,7 +6,6 @@ import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { PreSessionData } from '@/app/types'
 
-// 1. Iniciar uma nova sessão
 export async function startSessionAction(
   patientId: number,
   preSessionData: PreSessionData
@@ -25,7 +24,6 @@ export async function startSessionAction(
       })
       .returning({ id: sessions.id })
 
-    // Retorna o ID para o front saber qual sessão está ativa
     return { success: true, sessionId: newSession[0].id }
   } catch (error) {
     console.error('Erro ao iniciar sessão:', error)
@@ -33,13 +31,11 @@ export async function startSessionAction(
   }
 }
 
-// 2. Registrar um Comportamento (O "One-tap")
-// Now handles both frequency and duration simultaneously
 export async function logBehaviorAction(
   sessionId: number,
   behaviorId: number,
-  count: number = 0, // Frequency count (typically 1 per tap)
-  duration: number = 0 // Duration in seconds
+  count: number = 0,
+  duration: number = 0
 ) {
   try {
     const logData = {
@@ -51,8 +47,6 @@ export async function logBehaviorAction(
 
     await db.insert(sessionLogs).values(logData)
 
-    // Revalida a página para atualizar contadores se necessário,
-    // embora usaremos Optimistic UI no front para ser instantâneo.
     revalidatePath(`/session/${sessionId}`)
 
     return { success: true }
@@ -62,7 +56,6 @@ export async function logBehaviorAction(
   }
 }
 
-// 3. Finalizar a sessão
 export async function endSessionAction(sessionId: number, notes?: string) {
   try {
     await db
@@ -72,10 +65,10 @@ export async function endSessionAction(sessionId: number, notes?: string) {
         notes: notes || '',
       })
       .where(eq(sessions.id, sessionId))
-    
+
     revalidatePath(`/session/${sessionId}`)
     revalidatePath('/dashboard')
-    
+
     return { success: true }
   } catch (error) {
     console.error('Erro ao finalizar sessão:', error)
@@ -83,10 +76,8 @@ export async function endSessionAction(sessionId: number, notes?: string) {
   }
 }
 
-// 4. Buscar dados iniciais (Para carregar a tela de sessão)
 export async function getSessionData(sessionId: number) {
   try {
-    // Buscamos a sessão e os comportamentos configurados para aquele paciente
     const session = await db.query.sessions.findFirst({
       where: eq(sessions.id, sessionId),
       with: {
@@ -114,7 +105,6 @@ export async function getSessionData(sessionId: number) {
   }
 }
 
-// 5. Get session summary for charts
 export async function getSessionSummary(sessionId: number) {
   try {
     const logs = await db.query.sessionLogs.findMany({
@@ -125,7 +115,6 @@ export async function getSessionSummary(sessionId: number) {
       orderBy: (sessionLogs, { asc }) => [asc(sessionLogs.timestamp)],
     })
 
-    // Aggregate data by behavior
     const behaviorStats = new Map<
       number,
       {
@@ -163,7 +152,6 @@ export async function getSessionSummary(sessionId: number) {
   }
 }
 
-// 6. Get post-session data for summary page
 export async function getPostSessionData(sessionId: number) {
   try {
     const session = await db.query.sessions.findFirst({
@@ -185,7 +173,6 @@ export async function getPostSessionData(sessionId: number) {
       orderBy: (sessionLogs, { asc }) => [asc(sessionLogs.timestamp)],
     })
 
-    // Aggregate stats by behavior
     const behaviorStatsMap = new Map<
       number,
       {
@@ -211,7 +198,6 @@ export async function getPostSessionData(sessionId: number) {
 
       existing.totalCount += log.count
       existing.totalDuration += log.duration
-      // Only add duration to the array if it's greater than 0
       if (log.duration > 0) {
         existing.durations.push(log.duration)
       }
