@@ -30,6 +30,43 @@ export default async function SessionPage({ params }: SessionPageProps) {
 
   const sessionStartTime = new Date(session.startedAt)
 
+  const renderBehaviors = () => {
+    const hasBehaviors = behaviors.length > 0
+
+    if (!hasBehaviors) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              Nenhum comportamento configurado para este paciente.
+            </p>
+            <Link href={`/patients/${session.patientId}/behaviors`}>
+              <Button variant="link" className="mt-2">
+                Adicionar comportamentos
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {behaviors.map((behavior) => (
+          <BehaviorButton
+            key={behavior.id}
+            behaviorId={behavior.id}
+            behaviorName={behavior.name}
+            sessionId={sessionIdNum}
+            tracksFrequency={behavior.tracksFrequency}
+            tracksDuration={behavior.tracksDuration}
+            behaviorType={behavior.behaviorType}
+          />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="bg-background min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl">
@@ -45,34 +82,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
           </div>
         </div>
 
-        {behaviors.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                Nenhum comportamento configurado para este paciente.
-              </p>
-              <Link href={`/patients/${session.patientId}/behaviors`}>
-                <Button variant="link" className="mt-2">
-                  Adicionar comportamentos
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {behaviors.map((behavior) => (
-              <BehaviorButton
-                key={behavior.id}
-                behaviorId={behavior.id}
-                behaviorName={behavior.name}
-                sessionId={sessionIdNum}
-                tracksFrequency={behavior.tracksFrequency}
-                tracksDuration={behavior.tracksDuration}
-                behaviorType={behavior.behaviorType}
-              />
-            ))}
-          </div>
-        )}
+        {renderBehaviors()}
 
         <Card className="mt-6">
           <CardHeader>

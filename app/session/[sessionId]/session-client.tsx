@@ -5,12 +5,24 @@ import { useRouter } from 'next/navigation'
 import {
   endSessionAction,
   getSessionSummary,
+  logBehaviorAction,
 } from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { useTimerStore } from '@/lib/stores/timer-store'
+import { usePreventBrowserNavigation } from '@/lib/hooks/use-prevent-browser-navigation'
 import { ROUTES } from '@/constants/routes'
 import { formatDuration, calculateDurationInSeconds } from '@/utils'
+import {
+  type SessionSummaryData,
+  calculateTotalBehaviorCount,
+  confirmSessionEnd,
+  showSessionExitWithoutTimersToast,
+  showSessionEndSuccessToast,
+  showSessionEndErrorToast,
+  showSessionEndUnexpectedErrorToast,
+  hasActiveTimers,
+} from '@/utils/session-utils'
 
 const SUMMARY_REFRESH_INTERVAL_MS = 5000
 const SESSION_DURATION_UPDATE_INTERVAL_MS = 1000
@@ -21,48 +33,13 @@ interface SessionClientProps {
   sessionStartTime?: Date
 }
 
-interface BehaviorSummary {
-  name: string
-  totalCount: number
-  totalDuration: number
-  events: number
-  behaviorType: string
-}
-
-interface SessionLog {
-  id: number
-  sessionId: number
-  behaviorId: number
-  count: number
-  duration: number
-  timestamp: Date
-}
-
-interface SessionSummaryData {
-  summary: BehaviorSummary[]
-  logs: SessionLog[]
-}
-
-const calculateTotalBehaviorCount = (
-  behaviorSummaries: BehaviorSummary[]
-): number => {
-  return behaviorSummaries.reduce(
-    (total, behavior) => total + behavior.totalCount,
-    0
-  )
-}
-
-const confirmSessionEnd = (): boolean => {
-  return confirm('Tem certeza que deseja finalizar esta sessão?')
-}
-
 export function SessionClient({
   sessionId,
   showSummary = false,
   sessionStartTime,
 }: SessionClientProps) {
   const router = useRouter()
-  const { activeTimers } = useTimerStore()
+  const { activeTimers, stopTimer, clearAllTimers } = useTimerStore()
 
   const [isEndingSession, setIsEndingSession] = useState(false)
   const [summaryData, setSummaryData] = useState<SessionSummaryData | null>(
@@ -76,6 +53,69 @@ export function SessionClient({
       setSummaryData(result.data)
     }
   }, [sessionId])
+
+  const stopAllActiveTimers = useCallback(async () => {
+    const activeTimerEntries = Array.from(activeTimers.entries())
+
+    for (const [behaviorId, timerState] of activeTimerEntries) {
+      if (!timerState.isRunning) continue
+
+      const duration = stopTimer(behaviorId)
+
+      if (duration && duration > 0) {
+        try {
+          await logBehaviorAction(sessionId, behaviorId, 0, duration)
+        } catch (error) {
+          console.error(
+            `Erro ao registrar duração do comportamento ${behaviorId}:`,
+            error
+          )
+        }
+      }
+    }
+
+    clearAllTimers()
+  }, [activeTimers, sessionId, stopTimer, clearAllTimers])
+
+  const handleSessionFinalization = useCallback(
+    async (shouldStopTimers: boolean) => {
+      setIsEndingSession(true)
+
+      try {
+        if (shouldStopTimers) {
+          await stopAllActiveTimers()
+        }
+
+        const result = await endSessionAction(sessionId)
+
+        if (result.success) {
+          showSessionEndSuccessToast()
+          router.push(ROUTES.PATIENTS)
+        } else {
+          showSessionEndErrorToast()
+          setIsEndingSession(false)
+        }
+      } catch (error) {
+        console.error('Erro ao finalizar sessão:', error)
+        showSessionEndUnexpectedErrorToast()
+        setIsEndingSession(false)
+      }
+    },
+    [sessionId, router, stopAllActiveTimers]
+  )
+
+  const handleBrowserBack = useCallback(() => {
+    const shouldStopTimers = hasActiveTimers(activeTimers.size)
+    showSessionExitWithoutTimersToast(() =>
+      handleSessionFinalization(shouldStopTimers)
+    )
+  }, [activeTimers.size, handleSessionFinalization])
+
+  usePreventBrowserNavigation({
+    enabled: !showSummary,
+    activeTimersCount: activeTimers.size,
+    onBrowserBack: handleBrowserBack,
+  })
 
   useEffect(() => {
     if (!showSummary) return
@@ -118,6 +158,10 @@ export function SessionClient({
     setIsEndingSession(true)
 
     try {
+      if (hasActiveTimers(activeTimers.size)) {
+        await stopAllActiveTimers()
+      }
+
       const result = await endSessionAction(sessionId)
 
       if (result.success) {
@@ -139,7 +183,9 @@ export function SessionClient({
     }
   }
 
-  if (showSummary && summaryData) {
+  const renderSummaryView = () => {
+    if (!showSummary || !summaryData) return null
+
     const totalBehaviorCount = calculateTotalBehaviorCount(summaryData.summary)
     const activeSimultaneousTimers = activeTimers.size
 
@@ -167,6 +213,10 @@ export function SessionClient({
         </div>
       </div>
     )
+  }
+
+  if (showSummary) {
+    return renderSummaryView()
   }
 
   return (

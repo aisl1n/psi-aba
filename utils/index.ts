@@ -1,15 +1,25 @@
-export const formatDate = (date: string | Date) => {
+/**
+ * Formata uma data para o formato brasileiro (dd/mm/aaaa)
+ * @param date - Data a ser formatada (string ou objeto Date)
+ * @returns String com a data formatada
+ */
+export const formatDate = (date: string | Date): string => {
   return new Date(date as string).toLocaleDateString('pt-BR')
 }
 
-export const createdAtText = (date: Date) => {
+/**
+ * Gera um texto indicando quando um item foi adicionado
+ * @param date - Data de criação do item
+ * @returns Texto formatado como "Adicionado em dd/mm/aaaa"
+ */
+export const createdAtText = (date: Date): string => {
   return `Adicionado em ${formatDate(date)}`
 }
 
 /**
- * Formats seconds into MM:SS format
- * @param seconds - Time in seconds
- * @returns Formatted time string (e.g., "5:03", "12:45")
+ * Formata segundos no formato MM:SS
+ * @param seconds - Tempo em segundos
+ * @returns String formatada no padrão MM:SS (ex: "5:03", "12:45")
  */
 export const formatTimeMMSS = (seconds: number): string => {
   const mins = Math.floor(seconds / 60)
@@ -18,9 +28,9 @@ export const formatTimeMMSS = (seconds: number): string => {
 }
 
 /**
- * Formats seconds into a human-readable duration
- * @param seconds - Duration in seconds
- * @returns Formatted duration string (e.g., "2h 30m 15s" or "5m 30s")
+ * Formata segundos em uma duração legível para humanos
+ * @param seconds - Duração em segundos
+ * @returns String formatada (ex: "2h 30m 15s" ou "5m 30s")
  */
 export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)
@@ -34,10 +44,10 @@ export const formatDuration = (seconds: number): string => {
 }
 
 /**
- * Calculates duration between two dates in seconds
- * @param startDate - Start date
- * @param endDate - End date (defaults to now)
- * @returns Duration in seconds
+ * Calcula a duração entre duas datas em segundos
+ * @param startDate - Data de início
+ * @param endDate - Data de fim (padrão: agora)
+ * @returns Duração em segundos
  */
 export const calculateDurationInSeconds = (
   startDate: Date,
