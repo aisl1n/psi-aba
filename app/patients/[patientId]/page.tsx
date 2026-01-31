@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Pencil, Plus } from 'lucide-react'
 import { StartSessionSheet } from './start-session-sheet'
+import { AddManualSessionSheet } from './add-manual-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
 import { Behavior, Session } from '@/app/types'
@@ -173,15 +174,16 @@ export default async function PatientPage({ params }: PatientPageProps) {
         </p>
       </div>
 
-      <div className="mb-6 flex w-full justify-around gap-4 md:flex-row">
+      <div className="mb-6 flex w-full flex-col gap-2">
         <StartSessionSheet
           patientId={patientIdNum}
           hasBehaviors={hasBehaviors}
         />
+        <AddManualSessionSheet patientId={patientIdNum} behaviors={behaviors} />
         <Link
           href={`${ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId)}`}
         >
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="w-full">
             {renderBehaviorsIcon()}
             Comportamentos
           </Button>

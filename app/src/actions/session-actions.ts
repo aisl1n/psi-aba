@@ -4,7 +4,11 @@ import { db } from '@/db'
 import { sessions, sessionLogs, behaviors } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { PreSessionData } from '@/app/types'
+import {
+  PreSessionData,
+  ManualSessionData,
+  BehaviorLogInput,
+} from '@/app/types'
 
 export async function startSessionAction(
   patientId: number,
@@ -218,5 +222,61 @@ export async function getPostSessionData(sessionId: number) {
   } catch (error) {
     console.error('Error fetching post-session data:', error)
     return { success: false, error: 'Failed to fetch post-session data' }
+  }
+}
+
+export async function createManualSessionAction(
+  patientId: number,
+  sessionData: ManualSessionData,
+  behaviorLogs: BehaviorLogInput[]
+) {
+  try {
+    if (sessionData.endedAt <= sessionData.startedAt) {
+      return {
+        success: false,
+        error: 'A data de término deve ser posterior à data de início',
+      }
+    }
+
+    if (behaviorLogs.length === 0) {
+      return {
+        success: false,
+        error: 'Adicione pelo menos um registro de comportamento',
+      }
+    }
+
+    const newSession = await db
+      .insert(sessions)
+      .values({
+        patientId,
+        startedAt: sessionData.startedAt,
+        endedAt: sessionData.endedAt,
+        sleepHours: sessionData.sleepHours,
+        hasEaten: sessionData.hasEaten,
+        hasTakenMedication: sessionData.hasTakenMedication,
+        companion: sessionData.companion,
+        companionOther: sessionData.companionOther,
+      })
+      .returning({ id: sessions.id })
+
+    const sessionId = newSession[0].id
+
+    const logsToInsert = behaviorLogs.map((log) => ({
+      sessionId,
+      behaviorId: log.behaviorId,
+      count: log.count,
+      duration: log.duration,
+      timestamp: log.timestamp || sessionData.startedAt,
+    }))
+
+    await db.insert(sessionLogs).values(logsToInsert)
+
+    revalidatePath(`/patients/${patientId}`)
+    revalidatePath(`/session/${sessionId}`)
+
+    return { success: true, sessionId }
+  } catch (error) {
+    console.error('Erro ao criar sessão manual:', error)
+    return { success: false, error: 'Falha ao criar sessão manual' }
   }
 }

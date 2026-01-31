@@ -142,3 +142,23 @@ export const preventBrowserBackNavigation = (): void => {
 export const hasActiveTimers = (activeTimersCount: number): boolean => {
   return activeTimersCount > 0
 }
+
+/**
+ * Exibe um toast de sucesso ao criar sessão manual
+ */
+export const showManualSessionSuccessToast = (): void => {
+  toast.success('Sessão adicionada com sucesso', {
+    description: 'O registro manual foi salvo no histórico do paciente',
+  })
+}
+
+/**
+ * Exibe um toast de erro ao criar sessão manual
+ * @param errorMessage - Mensagem de erro a ser exibida
+ */
+export const showManualSessionErrorToast = (errorMessage?: string): void => {
+  toast.error('Erro ao adicionar sessão', {
+    description: errorMessage || 'Não foi possível salvar o registro manual',
+    position: 'top-left' as const,
+  })
+}
