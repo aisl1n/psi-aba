@@ -85,18 +85,25 @@ export default async function SessionSummaryPage({
     sessionEndTime
   )
   const totalBehaviorCount = calculateTotalBehaviorCount(behaviorStats)
+  const patientName = session.patient.name
+  const patientFirstName = patientName.split(' ')[0]
 
   const renderHeader = () => (
     <div className="mb-6">
-      <Link href={ROUTES.HOME}>
+      <Link
+        href={ROUTES.PATIENTS.replace(
+          ':patientId',
+          session.patientId.toString()
+        )}
+      >
         <Button variant="link" className="mb-2">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar ao início
+          <ArrowLeft className="mr-2 size-4" />
+          Voltar para {patientFirstName}
         </Button>
       </Link>
       <h1 className="text-3xl font-bold">Resumo da Sessão</h1>
       <p className="text-muted-foreground text-sm">
-        {session.patient.name} - {formatDate(session.startedAt)}
+        {patientName} - {formatDate(session.startedAt)}
       </p>
     </div>
   )
