@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { CheckCircle2, Clock } from 'lucide-react'
-import { useTimerStore } from '@/lib/stores/timer-store'
+import { useTimerStore } from '@/hooks'
 import { logBehaviorAction } from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

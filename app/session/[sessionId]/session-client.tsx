@@ -9,8 +9,7 @@ import {
 } from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
-import { useTimerStore } from '@/lib/stores/timer-store'
-import { usePreventBrowserNavigation } from '@/lib/hooks/use-prevent-browser-navigation'
+import { useTimerStore, usePreventBrowserNavigation } from '@/hooks'
 import { ROUTES } from '@/constants/routes'
 import { formatDuration, calculateDurationInSeconds } from '@/utils'
 import {

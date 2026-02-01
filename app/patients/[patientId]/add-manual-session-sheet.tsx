@@ -20,7 +20,7 @@ import {
   showManualSessionSuccessToast,
   showManualSessionErrorToast,
 } from '@/utils/session-utils'
-import { DateTimePicker } from '@/components/ui/datetime-picker'
+import { DateTimePicker } from '@/components/datetime-picker'
 
 interface AddManualSessionSheetProps {
   patientId: number
