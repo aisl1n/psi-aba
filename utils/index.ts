@@ -36,11 +36,18 @@ export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
-  
+
   if (hours > 0) {
     return `${hours}h ${mins}m ${secs}s`
   }
-  return `${mins}m ${secs}s`
+  if (mins > 0) {
+    if (secs === 0) {
+      return `${mins}m`
+    }
+    return `${mins}m ${secs}s`
+  }
+
+  return `${secs}s`
 }
 
 /**
@@ -54,4 +61,15 @@ export const calculateDurationInSeconds = (
   endDate: Date = new Date()
 ): number => {
   return Math.floor((endDate.getTime() - startDate.getTime()) / 1000)
+}
+
+/**
+ * Formata um Date para hora no padrão HH:mm:ss (pt-BR)
+ */
+export const formatTime = (date: string | Date): string => {
+  return new Date(date as string).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
 }
