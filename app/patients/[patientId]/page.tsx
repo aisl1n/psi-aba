@@ -9,12 +9,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Pencil, Plus } from 'lucide-react'
+import { ArrowLeft, Calendar, SmilePlus } from 'lucide-react'
 import { StartSessionSheet } from './start-session-sheet'
 import { AddManualSessionSheet } from './add-manual-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
 import { Behavior, Session } from '@/app/types'
+import FullSummarySessionSheet from './full-summary-session-sheet'
 
 const MAX_SESSIONS_OR_BEHAVIORS_DISPLAY = 5
 
@@ -124,14 +125,6 @@ export default async function PatientPage({ params }: PatientPageProps) {
     )
   }
 
-  function renderBehaviorsIcon() {
-    if (hasBehaviors) {
-      return <Pencil className="size-4" />
-    }
-
-    return <Plus className="size-4" />
-  }
-
   function renderSessionsContent(sessions: Session[]) {
     const hasSessions = sessions.length > 0
     if (!hasSessions) {
@@ -180,11 +173,12 @@ export default async function PatientPage({ params }: PatientPageProps) {
           hasBehaviors={hasBehaviors}
         />
         <AddManualSessionSheet patientId={patientIdNum} behaviors={behaviors} />
+        <FullSummarySessionSheet />
         <Link
           href={`${ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId)}`}
         >
           <Button variant="outline" size="sm" className="w-full">
-            {renderBehaviorsIcon()}
+            <SmilePlus className="size-4" />
             Comportamentos
           </Button>
         </Link>

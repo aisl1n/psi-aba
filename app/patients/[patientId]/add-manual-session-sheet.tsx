@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createManualSessionAction } from '@/app/src/actions/session-actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { FileText, Plus, Trash2 } from 'lucide-react'
+import { NotebookPen, Plus, Trash2 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -497,7 +497,7 @@ export function AddManualSessionSheet({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button size="sm" variant="outline" disabled={!hasBehaviors}>
-          <FileText className="size-4" />
+          <NotebookPen className="size-4" />
           Adicionar registro manual
         </Button>
       </SheetTrigger>
