@@ -9,13 +9,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, SmilePlus } from 'lucide-react'
+import { ArrowLeft, Calendar, FileText, SmilePlus } from 'lucide-react'
 import { StartSessionSheet } from './start-session-sheet'
 import { AddManualSessionSheet } from './add-manual-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
 import { Behavior, Session } from '@/app/types'
-import FullSummarySessionSheet from './full-summary-session-sheet'
 
 const MAX_SESSIONS_OR_BEHAVIORS_DISPLAY = 5
 
@@ -173,7 +172,14 @@ export default async function PatientPage({ params }: PatientPageProps) {
           hasBehaviors={hasBehaviors}
         />
         <AddManualSessionSheet patientId={patientIdNum} behaviors={behaviors} />
-        <FullSummarySessionSheet />
+
+        <Link href={`/patients/${patientId}/full-summary`} className="w-full">
+          <Button size="sm" variant="outline" className="w-full">
+            <FileText className="size-4" />
+            Ver resumo completo
+          </Button>
+        </Link>
+
         <Link
           href={`${ROUTES.PATIENT_BEHAVIORS.replace(':patientId', patientId)}`}
         >

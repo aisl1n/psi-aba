@@ -91,7 +91,7 @@ export default async function SessionSummaryPage({
   const renderHeader = () => (
     <div className="mb-6">
       <Link
-        href={ROUTES.PATIENTS.replace(
+        href={ROUTES.PATIENT.replace(
           ':patientId',
           session.patientId.toString()
         )}
