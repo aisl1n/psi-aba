@@ -14,6 +14,8 @@ import { Patient } from '../types'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText } from '@/utils'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PatientsPage() {
   const result = await getPatients()
 

@@ -87,12 +87,21 @@ export default async function PatientPage({ params }: PatientPageProps) {
           .map((behavior) => (
             <div
               key={behavior.id}
-              className="flex items-center justify-between rounded-md border p-2"
+              className="flex items-center justify-between gap-6 rounded-md border p-2"
             >
-              <span className="text-sm font-medium">{behavior.name}</span>
+              <span
+                className="line-clamp-1 block max-w-fit truncate text-sm font-medium"
+                title={behavior.name}
+              >
+                {behavior.name}
+              </span>
               <div className="text-muted-foreground flex gap-2 text-xs">
-                {behavior.tracksFrequency && <span>Contagem</span>}
-                {behavior.tracksDuration && <span>Cronômetro</span>}
+                {behavior.behaviorType === 'adaptive' && (
+                  <span>Adaptativo</span>
+                )}
+                {behavior.behaviorType === 'maladaptive' && (
+                  <span>Desadaptativo</span>
+                )}
               </div>
             </div>
           ))}
