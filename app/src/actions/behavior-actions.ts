@@ -9,10 +9,7 @@ import { revalidatePath } from 'next/cache'
 export async function getPatientBehaviors(patientId: number) {
   try {
     const patientBehaviors = await db.query.behaviors.findMany({
-      where: and(
-        eq(behaviors.patientId, patientId),
-        eq(behaviors.isActive, true)
-      ),
+      where: and(eq(behaviors.patientId, patientId)),
       orderBy: (behaviors, { asc }) => [asc(behaviors.name)],
     })
 

@@ -97,7 +97,9 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de comportamento</label>
+              <label className="text-sm font-medium">
+                Tipo de comportamento
+              </label>
               <div className="space-y-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -105,7 +107,7 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
                     name="behaviorType"
                     checked={behaviorType === 'adaptive'}
                     onChange={() => setBehaviorType('adaptive')}
-                    className="h-4 w-4"
+                    className="size-4"
                   />
                   <span className="text-sm">Adaptativo</span>
                 </label>
@@ -115,7 +117,7 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
                     name="behaviorType"
                     checked={behaviorType === 'maladaptive'}
                     onChange={() => setBehaviorType('maladaptive')}
-                    className="h-4 w-4"
+                    className="size-4"
                   />
                   <span className="text-sm">Desadaptativo</span>
                 </label>
@@ -131,7 +133,7 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
                     type="checkbox"
                     checked={tracksFrequency}
                     onChange={(e) => setTracksFrequency(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="size-4 rounded border-gray-300"
                   />
                   <span className="text-sm">
                     Rastrear frequência (Contagem)
@@ -142,7 +144,7 @@ export function CreateBehaviorSheet({ patientId }: CreateBehaviorSheetProps) {
                     type="checkbox"
                     checked={tracksDuration}
                     onChange={(e) => setTracksDuration(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="size-4 rounded border-gray-300"
                   />
                   <span className="text-sm">Rastrear duração (Cronômetro)</span>
                 </label>

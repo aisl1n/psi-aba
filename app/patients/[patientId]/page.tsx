@@ -83,6 +83,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
     return (
       <div className="space-y-2">
         {behaviors
+          .filter((behavior) => behavior.isActive === true)
           .slice(0, MAX_SESSIONS_OR_BEHAVIORS_DISPLAY)
           .map((behavior) => (
             <div

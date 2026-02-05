@@ -10,11 +10,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { CreateBehaviorSheet } from './create-behavior-sheet'
 import { ROUTES } from '@/constants/routes'
-import { Badge } from '@/components/ui/badge'
 import { Behavior } from '@/app/types'
+import { ToggleBehavior } from './toggle-behavior'
 
 const DECIMAL_RADIX = 10
 const FIRST_NAME_INDEX = 0
@@ -42,31 +42,9 @@ export default async function BehaviorsPage({ params }: BehaviorsPageProps) {
   const behaviors = behaviorsResult.success ? behaviorsResult.data || [] : []
   const patientName = patientResult.data.name.split(' ')[FIRST_NAME_INDEX]
 
-  function renderBehaviorStatus(behavior: Behavior) {
-    const isActive = behavior.isActive
-    return isActive ? 'Ativo' : 'Inativo'
-  }
-
-  function renderBehaviorBadges(behavior: Behavior) {
-    const hasFrequencyTracking = behavior.tracksFrequency
-    const hasDurationTracking = behavior.tracksDuration
-
-    return (
-      <div className="my-4 flex flex-col gap-2">
-        {hasFrequencyTracking && (
-          <Badge variant="default" className="flex items-center gap-1">
-            <CheckCircle2 className="size-3" />
-            Frequência
-          </Badge>
-        )}
-        {hasDurationTracking && (
-          <Badge variant="default" className="flex items-center gap-1">
-            <Clock className="size-3" />
-            Duração
-          </Badge>
-        )}
-      </div>
-    )
+  function renderBehaviorType(behavior: Behavior) {
+    const behaviorType = behavior.behaviorType
+    return behaviorType === 'adaptive' ? 'Adaptativo' : 'Desadaptativo'
   }
 
   function renderEmptyState() {
@@ -85,21 +63,26 @@ export default async function BehaviorsPage({ params }: BehaviorsPageProps) {
 
   function renderBehaviorsList() {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {behaviors.map((behavior) => (
           <Card
             key={behavior.id}
-            className="flex h-20 justify-between transition-shadow hover:shadow-lg"
+            className="relative flex h-24 w-full justify-between transition-shadow hover:shadow-lg"
           >
-            <CardHeader>
-              <CardTitle className="text-sm">
+            <CardHeader className="justify-center">
+              <CardTitle className="text-xs font-medium">
                 <span>{behavior.name}</span>
               </CardTitle>
-              <CardDescription className="text-muted-foreground -mt-2 text-xs">
-                {renderBehaviorStatus(behavior)}
+              <CardDescription className="text-muted-foreground -mt-1 text-xs">
+                {renderBehaviorType(behavior)}
               </CardDescription>
             </CardHeader>
-            <CardContent>{renderBehaviorBadges(behavior)}</CardContent>
+            <CardContent className="p-0">
+              <ToggleBehavior
+                behaviorId={behavior.id}
+                isActive={behavior.isActive}
+              />
+            </CardContent>
           </Card>
         ))}
       </div>

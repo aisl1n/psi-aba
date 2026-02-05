@@ -346,104 +346,106 @@ export function AddManualSessionSheet({
         Adicione os registros de comportamentos observados durante a sessão.
       </p>
 
-      {behaviors.map((behavior) => {
-        const logs = getBehaviorLogsForBehavior(behavior.id)
-        const totalCount = getTotalForBehavior(behavior.id, 'count')
-        const totalDuration = getTotalForBehavior(behavior.id, 'duration')
+      {behaviors
+        .filter((behavior) => behavior.isActive === true)
+        .map((behavior) => {
+          const logs = getBehaviorLogsForBehavior(behavior.id)
+          const totalCount = getTotalForBehavior(behavior.id, 'count')
+          const totalDuration = getTotalForBehavior(behavior.id, 'duration')
 
-        return (
-          <div key={behavior.id} className="rounded-lg border p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">{behavior.name}</h4>
-                <p className="text-muted-foreground text-xs">
-                  {behavior.behaviorType === 'adaptive'
-                    ? 'Adaptativo'
-                    : 'Desadaptativo'}
-                </p>
+          return (
+            <div key={behavior.id} className="rounded-lg border p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">{behavior.name}</h4>
+                  <p className="text-muted-foreground text-xs">
+                    {behavior.behaviorType === 'adaptive'
+                      ? 'Adaptativo'
+                      : 'Desadaptativo'}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAddBehaviorLog(behavior.id)}
+                >
+                  <Plus className="size-4" />
+                  Adicionar
+                </Button>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddBehaviorLog(behavior.id)}
-              >
-                <Plus className="size-4" />
-                Adicionar
-              </Button>
-            </div>
 
-            {logs.length > 0 && (
-              <div className="space-y-2">
-                {logs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="bg-muted/50 flex items-center gap-2 rounded-md border p-2"
-                  >
-                    {behavior.tracksFrequency && (
-                      <div className="flex-1">
-                        <label className="text-xs">Contagem</label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={log.count}
-                          onChange={(e) =>
-                            handleUpdateBehaviorLog(
-                              log.id,
-                              'count',
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="mt-1"
-                        />
-                      </div>
-                    )}
-                    {behavior.tracksDuration && (
-                      <div className="flex-1">
-                        <label className="text-xs">Duração (seg)</label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={log.duration}
-                          onChange={(e) =>
-                            handleUpdateBehaviorLog(
-                              log.id,
-                              'duration',
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="mt-1"
-                        />
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleRemoveBehaviorLog(log.id)}
-                      className="mt-5"
+              {logs.length > 0 && (
+                <div className="space-y-2">
+                  {logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="bg-muted/50 flex items-center gap-2 rounded-md border p-2"
                     >
-                      <Trash2 className="size-4 text-red-500" />
-                    </Button>
-                  </div>
-                ))}
+                      {behavior.tracksFrequency && (
+                        <div className="flex-1">
+                          <label className="text-xs">Contagem</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={log.count}
+                            onChange={(e) =>
+                              handleUpdateBehaviorLog(
+                                log.id,
+                                'count',
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                      {behavior.tracksDuration && (
+                        <div className="flex-1">
+                          <label className="text-xs">Duração (seg)</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={log.duration}
+                            onChange={(e) =>
+                              handleUpdateBehaviorLog(
+                                log.id,
+                                'duration',
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRemoveBehaviorLog(log.id)}
+                        className="mt-5"
+                      >
+                        <Trash2 className="size-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
 
-                <div className="bg-primary/10 mt-2 rounded-md p-2">
-                  <p className="text-sm font-medium">Totais:</p>
-                  <div className="text-muted-foreground flex gap-4 text-sm">
-                    {behavior.tracksFrequency && (
-                      <span>Contagem: {totalCount}</span>
-                    )}
-                    {behavior.tracksDuration && (
-                      <span>Duração: {totalDuration}s</span>
-                    )}
+                  <div className="bg-primary/10 mt-2 rounded-md p-2">
+                    <p className="text-sm font-medium">Totais:</p>
+                    <div className="text-muted-foreground flex gap-4 text-sm">
+                      {behavior.tracksFrequency && (
+                        <span>Contagem: {totalCount}</span>
+                      )}
+                      {behavior.tracksDuration && (
+                        <span>Duração: {totalDuration}s</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )
-      })}
+              )}
+            </div>
+          )
+        })}
 
       {behaviorLogs.length === 0 && (
         <p className="text-muted-foreground text-center text-sm">
