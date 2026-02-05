@@ -23,10 +23,19 @@ function renderQuickStartContent(patients: Patient[]) {
     ? 'Iniciar sessão'
     : 'Adicionar pacientes'
 
+  function handlePatientLink(patients: Patient[]) {
+    const lastPatientAdded = patients[0].id.toString()
+
+    if (patients.length > 0) {
+      return `${ROUTES.PATIENT.replace(':patientId', lastPatientAdded)}`
+    }
+    return ROUTES.PATIENTS
+  }
+
   return (
     <>
       <p className="text-muted-foreground mb-2 text-xs">{hasPatientsTitle}</p>
-      <Link href={ROUTES.PATIENTS}>
+      <Link href={handlePatientLink(patients)}>
         <Button className="w-full">{hasPatientsButton}</Button>
       </Link>
     </>
