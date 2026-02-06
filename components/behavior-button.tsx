@@ -234,7 +234,9 @@ export function BehaviorButton({
       variant="ghost"
       size="default"
     >
-      <span className={cn('text-base', colors.textColor)}>{behaviorName}</span>
+      <p className={cn('flex-wrap text-sm text-wrap', colors.textColor)}>
+        {behaviorName}
+      </p>
 
       <div className="flex items-center gap-3">
         {renderFrequencyBadge()}
