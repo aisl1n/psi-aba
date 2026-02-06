@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 /**
@@ -161,4 +162,12 @@ export const showManualSessionErrorToast = (errorMessage?: string): void => {
     description: errorMessage || 'Não foi possível salvar o registro manual',
     position: 'top-left' as const,
   })
+}
+
+export const sessionStartTimeText = (startedAt: Date): string => {
+  return format(startedAt, 'HH:mm')
+}
+
+export const sessionEndTimeText = (endedAt: Date): string => {
+  return format(endedAt, 'HH:mm')
 }

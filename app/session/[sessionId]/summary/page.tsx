@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Clock, User, Moon, Utensils, Pill } from 'lucide-react'
 import { SessionCharts } from '@/components/session-charts'
 import { Badge } from '@/components/ui/badge'
-import { formatDate, formatDuration, calculateDurationInSeconds } from '@/utils'
+import { formatDuration, calculateDurationInSeconds, formatDate } from '@/utils'
 import {
   getCompanionDisplayText,
   calculateTotalBehaviorCount,
@@ -14,6 +14,7 @@ import {
   BEHAVIOR_TYPE_LABELS,
 } from '@/utils/session-summary-utils'
 import { ROUTES } from '@/constants/routes'
+import { sessionEndTimeText, sessionStartTimeText } from '@/utils/session-utils'
 
 const DECIMAL_RADIX = 10
 
@@ -103,7 +104,9 @@ export default async function SessionSummaryPage({
       </Link>
       <h1 className="text-3xl font-bold">Resumo da Sessão</h1>
       <p className="text-muted-foreground text-sm">
-        {patientName} - {formatDate(session.startedAt)}
+        {patientName} - {formatDate(session.startedAt)} -{' '}
+        {sessionStartTimeText(sessionStartTime)} à{' '}
+        {sessionEndTimeText(sessionEndTime)}
       </p>
     </div>
   )
