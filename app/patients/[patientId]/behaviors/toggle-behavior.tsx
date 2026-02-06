@@ -25,7 +25,7 @@ export function ToggleBehavior({
     <Button
       size="default"
       variant="ghost"
-      className={`hover:bg-transparent [&_svg]:size-6 ${buttonClassName}`}
+      className={`absolute top-0 right-0 mx-2 p-0 hover:bg-transparent [&_svg]:size-6 ${buttonClassName}`}
       onClick={() => updateBehavior(behaviorId, { isActive: !isActive })}
     >
       {icon}

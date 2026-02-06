@@ -70,6 +70,10 @@ export default async function BehaviorsPage({ params }: BehaviorsPageProps) {
             className="relative flex h-24 w-full justify-between transition-shadow hover:shadow-lg"
           >
             <CardHeader className="justify-center">
+              <ToggleBehavior
+                behaviorId={behavior.id}
+                isActive={behavior.isActive}
+              />
               <CardTitle className="text-xs font-medium">
                 <span>{behavior.name}</span>
               </CardTitle>
@@ -77,12 +81,6 @@ export default async function BehaviorsPage({ params }: BehaviorsPageProps) {
                 {renderBehaviorType(behavior)}
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-0">
-              <ToggleBehavior
-                behaviorId={behavior.id}
-                isActive={behavior.isActive}
-              />
-            </CardContent>
           </Card>
         ))}
       </div>
