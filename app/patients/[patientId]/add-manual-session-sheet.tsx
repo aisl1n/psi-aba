@@ -150,12 +150,17 @@ export function AddManualSessionSheet({
         companionOther: companion === 'other' ? companionOther : undefined,
       }
 
-      const logsToSubmit: BehaviorLogInput[] = behaviorLogs.map((log) => ({
-        behaviorId: log.behaviorId,
-        count: log.count,
-        duration: log.duration,
-        timestamp: log.timestamp,
-      }))
+      const logsToSubmit: BehaviorLogInput[] = behaviorLogs.map((log) => {
+        const behavior = behaviors.find((b) => b.id === log.behaviorId)
+        const count =
+          behavior?.tracksFrequency === true ? 1 : log.count
+        return {
+          behaviorId: log.behaviorId,
+          count,
+          duration: log.duration,
+          timestamp: log.timestamp,
+        }
+      })
 
       const result = await createManualSessionAction(
         patientId,
@@ -350,7 +355,7 @@ export function AddManualSessionSheet({
         .filter((behavior) => behavior.isActive === true)
         .map((behavior) => {
           const logs = getBehaviorLogsForBehavior(behavior.id)
-          const totalCount = getTotalForBehavior(behavior.id, 'count')
+          const totalCount = logs.length
           const totalDuration = getTotalForBehavior(behavior.id, 'duration')
 
           return (
@@ -388,15 +393,9 @@ export function AddManualSessionSheet({
                           <Input
                             type="number"
                             min="0"
-                            value={log.count}
-                            onChange={(e) =>
-                              handleUpdateBehaviorLog(
-                                log.id,
-                                'count',
-                                parseInt(e.target.value) || 0
-                              )
-                            }
-                            className="mt-1"
+                            value={1}
+                            readOnly
+                            className="mt-1 border-0 bg-transparent selection:border-0"
                           />
                         </div>
                       )}

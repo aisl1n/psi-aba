@@ -1,5 +1,6 @@
 /**
- * Constantes para validação e formatação de tempo
+ * Constantes para validação e formatação de tempo.
+ * Na UI o usuário vê e digita apenas HH:MM; internamente/API usa HH:MM:00.
  */
 export const TIME_LIMITS = {
   HOURS_MAX: 23,
@@ -7,19 +8,24 @@ export const TIME_LIMITS = {
   SECONDS_MAX: 59,
 } as const
 
+/** Regex para tempo completo no input: HH:MM (2 dígitos, dois pontos) */
+const TIME_INPUT_COMPLETE_REGEX = /^\d{2}:\d{2}$/
+
 export const TIME_FORMAT = {
-  /** Comprimento da string HH:MM:SS */
-  LENGTH: 8,
+  /** Comprimento da string exibida no input (HH:MM) */
+  LENGTH: 5,
+  /** Comprimento da string para API (HH:MM:SS) */
+  API_LENGTH: 8,
   /** Placeholder exibido no input */
-  PLACEHOLDER: '00:00:00',
-  /** Comprimento máximo permitido no input (incluindo separadores) */
-  INPUT_MAX_LENGTH: 8,
+  PLACEHOLDER: '00:00',
+  /** Comprimento máximo permitido no input */
+  INPUT_MAX_LENGTH: 5,
 } as const
 
 export const PAD_LENGTH = 2
 
 /**
- * Converte um Date para string no formato HH:MM:SS
+ * Converte um Date para string no formato HH:MM:SS (uso interno/API).
  */
 export const dateToTimeString = (date: Date): string => {
   const h = date.getHours().toString().padStart(PAD_LENGTH, '0')
@@ -27,6 +33,12 @@ export const dateToTimeString = (date: Date): string => {
   const s = date.getSeconds().toString().padStart(PAD_LENGTH, '0')
   return `${h}:${m}:${s}`
 }
+
+/**
+ * Converte um Date para string exibida no input: HH:MM (sem segundos).
+ */
+export const dateToTimeStringForInput = (date: Date): string =>
+  dateToTimeString(date).slice(0, TIME_FORMAT.LENGTH)
 
 /**
  * Aplica um timeString (HH:MM:SS) em uma data base, retornando nova instância.
@@ -45,7 +57,8 @@ export const setTimeOnDate = (baseDate: Date, timeString: string): Date => {
 }
 
 /**
- * Formata a entrada do usuário para o padrão HH:MM:SS progressivamente
+ * Formata a entrada do usuário para HH:MM progressivamente (apenas hora e minuto).
+ * Extrai dígitos com regex; segundos são sempre 00 ao criar o Date.
  */
 export const formatTimeInput = (value: string): string => {
   const numbers = value.replace(/\D/g, '')
@@ -57,18 +70,6 @@ export const formatTimeInput = (value: string): string => {
     return h.toString().padStart(numbers.length, '0')
   }
 
-  if (numbers.length <= 4) {
-    const h = Math.min(
-      parseInt(numbers.slice(0, 2), 10) || 0,
-      TIME_LIMITS.HOURS_MAX
-    )
-    const m = Math.min(
-      parseInt(numbers.slice(2), 10) || 0,
-      TIME_LIMITS.MINUTES_MAX
-    )
-    return `${h.toString().padStart(PAD_LENGTH, '0')}:${m.toString().padStart(numbers.length - 2, '0')}`
-  }
-
   const h = Math.min(
     parseInt(numbers.slice(0, 2), 10) || 0,
     TIME_LIMITS.HOURS_MAX
@@ -77,14 +78,7 @@ export const formatTimeInput = (value: string): string => {
     parseInt(numbers.slice(2, 4), 10) || 0,
     TIME_LIMITS.MINUTES_MAX
   )
-  const s = Math.min(
-    parseInt(numbers.slice(4, 6), 10) || 0,
-    TIME_LIMITS.SECONDS_MAX
-  )
-  const sStr =
-    numbers.length === 5 ? s.toString() : s.toString().padStart(PAD_LENGTH, '0')
-
-  return `${h.toString().padStart(PAD_LENGTH, '0')}:${m.toString().padStart(PAD_LENGTH, '0')}:${sStr}`
+  return `${h.toString().padStart(PAD_LENGTH, '0')}:${m.toString().padStart(numbers.length - 2, '0')}`
 }
 
 export interface ParsedTime {
@@ -94,8 +88,8 @@ export interface ParsedTime {
 }
 
 /**
- * Parse de string HH:MM:SS para objeto { hours, minutes, seconds }
- * Retorna null se inválido
+ * Parse de string HH:MM ou HH:MM:SS para objeto { hours, minutes, seconds }.
+ * Para HH:MM, segundos são 0. Retorna null se inválido.
  */
 export const parseTimeString = (value: string): ParsedTime | null => {
   const match = value.match(/^(\d{1,2}):?(\d{1,2})?:?(\d{1,2})?$/)
@@ -116,10 +110,10 @@ export const parseTimeString = (value: string): ParsedTime | null => {
 }
 
 /**
- * Verifica se o valor formatado representa um tempo completo e válido
+ * Verifica se o valor formatado representa um tempo completo e válido (HH:MM).
  */
 export const isValidCompleteTime = (formatted: string): boolean =>
-  formatted.length === TIME_FORMAT.LENGTH && formatted.includes(':')
+  TIME_INPUT_COMPLETE_REGEX.test(formatted)
 
 /**
  * Cria um Date com a hora a partir de um ParsedTime

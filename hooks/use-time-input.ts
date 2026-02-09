@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import {
-  dateToTimeString,
+  dateToTimeStringForInput,
   formatTimeInput,
   isValidCompleteTime,
   parseTimeString,
@@ -17,7 +17,7 @@ export function useTimeInput(
   onChange: (date: Date) => void
 ) {
   const displayValue = dateValue
-    ? dateToTimeString(dateValue)
+    ? dateToTimeStringForInput(dateValue)
     : DEFAULT_TIME_STRING
   const [inputValue, setInputValue] = React.useState(displayValue)
 
