@@ -15,6 +15,7 @@ import { AddManualSessionSheet } from './add-manual-session-sheet'
 import { ROUTES } from '@/constants/routes'
 import { createdAtText, formatDate } from '@/utils'
 import { Behavior, Session } from '@/app/types'
+import PatientBehavior from './patient-behavior'
 
 const MAX_SESSIONS_OR_BEHAVIORS_DISPLAY = 5
 
@@ -82,35 +83,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
 
     return (
       <div className="space-y-2">
-        {behaviors
-          .filter((behavior) => behavior.isActive === true)
-          .slice(0, MAX_SESSIONS_OR_BEHAVIORS_DISPLAY)
-          .map((behavior) => (
-            <div
-              key={behavior.id}
-              className="flex items-center justify-between gap-6 rounded-md border p-2"
-            >
-              <span
-                className="line-clamp-1 block max-w-fit truncate text-sm font-medium"
-                title={behavior.name}
-              >
-                {behavior.name}
-              </span>
-              <div className="text-muted-foreground flex gap-2 text-xs">
-                {behavior.behaviorType === 'adaptive' && (
-                  <span>Adaptativo</span>
-                )}
-                {behavior.behaviorType === 'maladaptive' && (
-                  <span>Desadaptativo</span>
-                )}
-              </div>
-            </div>
-          ))}
-        {behaviors.length > MAX_SESSIONS_OR_BEHAVIORS_DISPLAY && (
-          <p className="text-muted-foreground text-xs">
-            +{behaviors.length - MAX_SESSIONS_OR_BEHAVIORS_DISPLAY} mais
-          </p>
-        )}
+        <PatientBehavior behaviors={behaviors} patientId={patientId} />
       </div>
     )
   }
