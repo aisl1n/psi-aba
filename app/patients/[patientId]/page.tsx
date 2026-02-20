@@ -82,9 +82,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
     }
 
     return (
-      <div className="space-y-2">
-        <PatientBehavior behaviors={behaviors} patientId={patientId} />
-      </div>
+      <PatientBehavior behaviors={behaviors} patientId={patientId} />
     )
   }
 

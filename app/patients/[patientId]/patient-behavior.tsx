@@ -64,9 +64,9 @@ export default function PatientBehavior({ behaviors, patientId }: PatientBehavio
     )
   }
   return (
-    <>
+    <div className="space-y-2">
       {renderBehaviors()}
       {renderBehaviorsMore()}
-    </>
+    </div>
   )
 }
