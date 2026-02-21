@@ -1,5 +1,7 @@
 import { getPatients } from '@/app/src/actions/patient-actions'
 import { Button } from '@/components/ui/button'
+import { UserMenu } from '@/components/auth/user-menu'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
   ActivityIcon,
@@ -24,9 +26,8 @@ function renderQuickStartContent(patients: Patient[]) {
     : 'Adicionar pacientes'
 
   function handlePatientLink(patients: Patient[]) {
-    const lastPatientAdded = patients[0].id.toString()
-
     if (patients.length > 0) {
+      const lastPatientAdded = patients[0].id.toString()
       return `${ROUTES.PATIENT.replace(':patientId', lastPatientAdded)}`
     }
     return ROUTES.PATIENTS
@@ -104,28 +105,38 @@ function renderRecentPatients(patients: Patient[]) {
   )
 }
 
-function renderHeader() {
+function renderHeader(userEmail?: string) {
   return (
-    <div className="mb-8 text-center">
-      <div className="mb-2 flex flex-col items-center gap-1">
-        <BrainCogIcon className="size-10" color="green" />
-        <h1 className="text-2xl font-bold">ABA Tracker</h1>
-        <p className="text-muted-foreground text-xs">
-          Gestão de pacientes e comportamentos.
-        </p>
+    <div className="mb-8">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BrainCogIcon className="size-10" color="green" />
+          <div>
+            <h1 className="text-2xl font-bold">ABA Tracker</h1>
+            <p className="text-muted-foreground text-xs">
+              Gestão de pacientes e comportamentos.
+            </p>
+          </div>
+        </div>
+        <UserMenu userEmail={userEmail} />
       </div>
     </div>
   )
 }
 
 export default async function Home() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const result = await getPatients()
   const patients = result.success ? result.data || [] : []
 
   return (
     <div className="bg-background min-h-screen">
       <div className="mx-auto space-y-4 p-4 md:p-6">
-        {renderHeader()}
+        {renderHeader(user?.email)}
         {renderQuickStart(patients)}
         {renderPatients(patients)}
         {renderRecentPatients(patients)}

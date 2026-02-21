@@ -17,6 +17,7 @@ export const behaviorTypeEnum = pgEnum('behavior_type', [
 
 export const patients = pgTable('patients', {
   id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

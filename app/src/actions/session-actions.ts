@@ -2,6 +2,7 @@
 
 import { db } from '@/db'
 import { sessions, sessionLogs, behaviors, patients } from '@/db/schema'
+import { createClient } from '@/lib/supabase/server'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
@@ -15,6 +16,15 @@ export async function startSessionAction(
   preSessionData: PreSessionData
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const newSession = await db
       .insert(sessions)
       .values({
@@ -42,6 +52,15 @@ export async function logBehaviorAction(
   duration: number = 0
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const logData = {
       sessionId,
       behaviorId,
@@ -62,6 +81,15 @@ export async function logBehaviorAction(
 
 export async function endSessionAction(sessionId: number, notes?: string) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     await db
       .update(sessions)
       .set({
@@ -82,6 +110,15 @@ export async function endSessionAction(sessionId: number, notes?: string) {
 
 export async function getSessionData(sessionId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const session = await db.query.sessions.findFirst({
       where: eq(sessions.id, sessionId),
       with: {
@@ -111,6 +148,15 @@ export async function getSessionData(sessionId: number) {
 
 export async function getSessionSummary(sessionId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const logs = await db.query.sessionLogs.findMany({
       where: eq(sessionLogs.sessionId, sessionId),
       with: {
@@ -158,6 +204,15 @@ export async function getSessionSummary(sessionId: number) {
 
 export async function getPostSessionData(sessionId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const session = await db.query.sessions.findFirst({
       where: eq(sessions.id, sessionId),
       with: {
@@ -231,6 +286,15 @@ export async function createManualSessionAction(
   behaviorLogs: BehaviorLogInput[]
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     if (sessionData.endedAt <= sessionData.startedAt) {
       return {
         success: false,
@@ -391,6 +455,15 @@ export async function getPatientFullSummary(
   dateRange?: DateRangeFilter
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const patient = await db.query.patients.findFirst({
       where: eq(patients.id, patientId),
     })

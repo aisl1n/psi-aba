@@ -3,12 +3,23 @@
 import { ROUTES } from '@/constants/routes'
 import { db } from '@/db'
 import { patients } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { createClient } from '@/lib/supabase/server'
+import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function getPatients() {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const allPatients = await db.query.patients.findMany({
+      where: eq(patients.userId, user.id),
       orderBy: (patients, { desc }) => [desc(patients.createdAt)],
     })
     return { success: true, data: allPatients }
@@ -20,10 +31,20 @@ export async function getPatients() {
 
 export async function createPatient(name: string) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const newPatient = await db
       .insert(patients)
       .values({
         name,
+        userId: user.id,
       })
       .returning()
 
@@ -37,8 +58,18 @@ export async function createPatient(name: string) {
 
 export async function getPatient(patientId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const patient = await db.query.patients.findFirst({
-      where: eq(patients.id, patientId),
+      where: (patients, { eq, and }) =>
+        and(eq(patients.id, patientId), eq(patients.userId, user.id)),
       with: {
         behaviors: true,
         sessions: {

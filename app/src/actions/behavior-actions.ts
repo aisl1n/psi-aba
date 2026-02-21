@@ -3,11 +3,21 @@
 import { ROUTES } from '@/constants/routes'
 import { db } from '@/db'
 import { behaviors } from '@/db/schema'
+import { createClient } from '@/lib/supabase/server'
 import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function getPatientBehaviors(patientId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const patientBehaviors = await db.query.behaviors.findMany({
       where: and(eq(behaviors.patientId, patientId)),
       orderBy: (behaviors, { asc }) => [asc(behaviors.name)],
@@ -28,6 +38,15 @@ export async function createBehavior(
   behaviorType: 'adaptive' | 'maladaptive' = 'maladaptive'
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const newBehavior = await db
       .insert(behaviors)
       .values({
@@ -60,6 +79,15 @@ export async function updateBehavior(
   }
 ) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const updated = await db
       .update(behaviors)
       .set(data)
@@ -80,6 +108,15 @@ export async function updateBehavior(
 
 export async function deleteBehavior(behaviorId: number) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     await db.delete(behaviors).where(eq(behaviors.id, behaviorId))
 
     revalidatePath(ROUTES.PATIENTS)
